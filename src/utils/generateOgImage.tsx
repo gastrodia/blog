@@ -6,20 +6,20 @@ import { Resvg } from "@resvg/resvg-js";
 const fetchFonts = async () => {
   // Regular Font
   const fontFileRegular = await fetch(
-    "https://www.1001fonts.com/download/font/ibm-plex-mono.regular.ttf"
+    "https://jiajiwei.top/assets/font/font.ttf"
   );
-  const fontRegular: ArrayBuffer = await fontFileRegular.arrayBuffer();
+  const fontRegular = await fontFileRegular.arrayBuffer();
 
   // Bold Font
-  const fontFileBold = await fetch(
-    "https://www.1001fonts.com/download/font/ibm-plex-mono.bold.ttf"
-  );
-  const fontBold: ArrayBuffer = await fontFileBold.arrayBuffer();
+  /* const fontFileBold = await fetch(
+         "https://www.1001fonts.com/download/font/ibm-plex-mono.bold.ttf"
+     );
+     const fontBold: ArrayBuffer = await fontFileBold.arrayBuffer();*/
 
-  return { fontRegular, fontBold };
+  return { fontRegular };
 };
 
-const { fontRegular, fontBold } = await fetchFonts();
+const { fontRegular } = await fetchFonts();
 
 const ogImage = (text: string) => {
   return (
@@ -121,16 +121,11 @@ const options: SatoriOptions = {
   embedFont: true,
   fonts: [
     {
-      name: "IBM Plex Mono",
+      name: "Hello",
       data: fontRegular,
       weight: 400,
       style: "normal",
-    },
-    {
-      name: "IBM Plex Mono",
-      data: fontBold,
-      weight: 600,
-      style: "normal",
+      lang: "zh-CN",
     },
   ],
 };
