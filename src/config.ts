@@ -3,7 +3,7 @@ import type { Site, SocialObjects } from "./types";
 export const SITE: Site = {
   website: "https://jiajiwei.top/",
   author: "Code_You",
-  desc: "记录与分享我的前端生。",
+  desc: "记录与分享我的前端生活。",
   title: "Blog",
   ogImage: "astropaper-og.jpg",
   lightAndDarkMode: true,
