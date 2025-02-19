@@ -61,7 +61,7 @@ module.exports = {
       },
       fontFamily: {
         chinese: ["KingHwa_OldSong"],
-        mono: ["Consolas"]
+        mono: ["Maple Mono CN Light"]
       },
 
       typography: {

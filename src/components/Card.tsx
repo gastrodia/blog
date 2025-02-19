@@ -13,7 +13,7 @@ export default function Card({ href, frontmatter, secHeading = true }: Props) {
     <li className="my-6">
       <a
         href={href}
-        className="block  border border-skin-line p-4 hover:outline"
+        className="block  border border-skin-line p-4 hover:outline-dashed"
       >
         {secHeading ? (
           <h2 className="text-lg font-medium text-skin-accent">{title}</h2>
