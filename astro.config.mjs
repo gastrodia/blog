@@ -29,7 +29,7 @@ export default defineConfig({
       ],
     ],
     shikiConfig: {
-      theme: "one-dark-pro",
+      themes: { light: "min-light", dark: "night-owl" },
       wrap: true,
     },
     extendDefaultPlugins: true,
@@ -39,4 +39,5 @@ export default defineConfig({
       exclude: ["@resvg/resvg-js"],
     },
   },
+  scopedStyleStrategy: "where",
 });
