@@ -1,7 +1,7 @@
 import { LOCALE } from "@config";
 
 export interface Props {
-  datetime: string | Date;
+  datetime?: string | Date;
   size?: "sm" | "lg";
   className?: string;
 }
@@ -27,8 +27,8 @@ export default function Datetime({ datetime, size = "sm", className }: Props) {
   );
 }
 
-const FormattedDatetime = ({ datetime }: { datetime: string | Date }) => {
-  const myDatetime = new Date(datetime);
+const FormattedDatetime = ({ datetime }: { datetime?: string | Date }) => {
+  const myDatetime = datetime ? new Date(datetime) : new Date();
 
   const date = myDatetime.toLocaleDateString(LOCALE, {
     year: "numeric",
