@@ -16,17 +16,29 @@ function getPreferTheme() {
     : "light";
 }
 
-let themeValue = getPreferTheme();
+window.theme = getPreferTheme();
 
 function setPreference() {
-  localStorage.setItem("theme", themeValue);
+  localStorage.setItem("theme", theme);
+  setCommentsTheme(theme);
   reflectPreference();
 }
 
-function reflectPreference() {
-  document.firstElementChild.setAttribute("data-theme", themeValue);
+function setCommentsTheme(theme) {
+  const iframe = document.querySelector("iframe.giscus-frame");
+  if (!iframe) return;
+  iframe.contentWindow.postMessage(
+    { giscus: { setConfig: { theme } } },
+    "https://giscus.app"
+  );
+}
 
-  document.querySelector("#theme-btn")?.setAttribute("aria-label", themeValue);
+function reflectPreference() {
+  document.firstElementChild.setAttribute("data-theme", window.theme);
+
+  document
+    .querySelector("#theme-btn")
+    ?.setAttribute("aria-label", window.theme);
 }
 
 // set early so no page flashes / CSS is made aware
@@ -34,11 +46,12 @@ reflectPreference();
 
 window.onload = () => {
   // set on load so screen readers can get the latest value on the button
+  setCommentsTheme(window.theme);
   reflectPreference();
 
   // now this script can find and listen for clicks on the control
   document.querySelector("#theme-btn")?.addEventListener("click", () => {
-    themeValue = themeValue === "light" ? "dark" : "light";
+    window.theme = window.theme === "light" ? "dark" : "light";
     setPreference();
   });
 };
@@ -47,6 +60,6 @@ window.onload = () => {
 window
   .matchMedia("(prefers-color-scheme: dark)")
   .addEventListener("change", ({ matches: isDark }) => {
-    themeValue = isDark ? "dark" : "light";
+    window.theme = isDark ? "dark" : "light";
     setPreference();
   });
