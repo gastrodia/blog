@@ -29,7 +29,7 @@ export default defineConfig({
       ],
     ],
     shikiConfig: {
-      themes: { light: "min-light", dark: "night-owl" },
+      themes: { light: "min-light", dark: "nord" },
       wrap: true,
     },
     extendDefaultPlugins: true,

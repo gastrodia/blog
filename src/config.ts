@@ -1,4 +1,5 @@
 import type { Site, SocialObjects } from "./types";
+import type { GiscusProps } from "@giscus/react";
 
 export const SITE: Site = {
   website: "https://jiajiwei.top/",
@@ -10,7 +11,17 @@ export const SITE: Site = {
   postPerPage: 10,
 };
 
-export const LOCALE = ["zh-CN"]; // set to [] to use the environment default
+const LANG = "zh-CN";
+
+export const GISCUS: GiscusProps = {
+  repo: "gastrodia/blog",
+  repoId: "R_kgDOJ1bm_g",
+  mapping: "pathname",
+  categoryId: "DIC_kwDOJ1bm_s4CnGP_",
+  lang: LANG,
+};
+
+export const LOCALE = [LANG]; // set to [] to use the environment default
 
 export const SOCIALS: SocialObjects = [
   {
