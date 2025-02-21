@@ -25,8 +25,16 @@ const socialImageURL = new URL(
 ---
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
+    <script is:inline>
+      // 初始化主题色防止闪屏
+      const saved = localStorage.getItem("theme");
+      const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const savedTheme = saved === "dark" ? "dark" : "light";
+      const realTheme = savedTheme || (systemDark ? "dark" : "light");
+      document.firstElementChild?.setAttribute("data-theme", realTheme);
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

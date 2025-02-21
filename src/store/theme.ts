@@ -7,12 +7,9 @@ onMount(theme, () => {
     document.firstElementChild?.setAttribute("data-theme", value);
     localStorage.setItem("theme", value);
   };
-  const saved = localStorage.getItem("theme");
-  const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const savedTheme: Theme = saved === "dark" ? "dark" : "light";
-  const realTheme = savedTheme || (systemDark ? "dark" : "light");
+  const htmlTheme = document.firstElementChild?.getAttribute("data-theme");
+  const realTheme = htmlTheme === "dark" ? "dark" : "light";
   theme.set(realTheme);
-  applyTheme(realTheme);
 
   // 可选：监听系统主题变化
   const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
