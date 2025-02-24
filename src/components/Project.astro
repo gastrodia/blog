@@ -1,0 +1,29 @@
+---
+import LinkButton from "@components/LinkButton.astro"
+
+export interface ProjectProps {
+  title: string;
+  href?: string;
+  tags: string;
+  desc: string;
+  github?: string;
+  wip?: boolean;
+}
+
+const { title, href, github, desc, tags } = Astro.props;
+---
+
+<li class="project-item ">
+  <div class="flex items-center justify-between">
+    <LinkButton className="hover:text-skin-accent underline underline-offset-4 decoration-dashed" href={href} target="_blank">{title}</LinkButton>
+    <LinkButton className="hover:text-skin-accent underline underline-offset-4 decoration-dashed" href={github} target="_blank"> GITHUB </LinkButton>
+  </div>
+  <p class="py-2 text-sm">{desc}</p>
+  <p>{tags}</p>
+</li>
+
+<style>
+  .project-item {
+    @apply outline-2 outline-offset-1 outline-skin-fill focus-visible:no-underline focus-visible:outline-dashed block border border-skin-line p-4;
+  }
+</style>

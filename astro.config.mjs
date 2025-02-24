@@ -6,9 +6,12 @@ import remarkCollapse from "remark-collapse";
 import sitemap from "@astrojs/sitemap";
 import { SITE } from "./src/config";
 
+import vercel from "@astrojs/vercel";
+
 // https://astro.build/config
 export default defineConfig({
   site: SITE.website,
+
   integrations: [
     tailwind({
       config: {
@@ -18,6 +21,7 @@ export default defineConfig({
     react(),
     sitemap(),
   ],
+
   markdown: {
     remarkPlugins: [
       remarkToc,
@@ -34,10 +38,13 @@ export default defineConfig({
     },
     extendDefaultPlugins: true,
   },
+
   vite: {
     optimizeDeps: {
       exclude: ["@resvg/resvg-js"],
     },
   },
+
   scopedStyleStrategy: "where",
+  adapter: vercel(),
 });

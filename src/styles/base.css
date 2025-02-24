@@ -11,6 +11,10 @@
     --color-card: 230, 230, 230;
     --color-card-muted: 205, 205, 205;
     --color-border: 236, 233, 233;
+    --animate-duration: 1s;
+    --animate-repeat: 1;
+    /* All delay classes will take half the time to start */
+    --animate-delay: 0.3s;
   }
   html[data-theme="dark"] {
     --color-fill: 33, 39, 55;
@@ -19,6 +23,10 @@
     --color-card: 52, 63, 96;
     --color-card-muted: 138, 51, 2;
     --color-border: 171, 75, 8;
+    --animate-duration: 1s;
+    --animate-repeat: 1;
+    /* All delay classes will take half the time to start */
+    --animate-delay: 0.3s;
   }
   #sun-svg,
   html[data-theme="dark"] #moon-svg {
@@ -158,4 +166,5 @@
   .focus-outline {
     @apply outline-2 outline-offset-1 outline-skin-fill focus-visible:no-underline focus-visible:outline-dashed;
   }
+  
 }

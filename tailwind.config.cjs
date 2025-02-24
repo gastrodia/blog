@@ -14,9 +14,7 @@ module.exports = {
   theme: {
     // Remove the following screen breakpoint or add other breakpoints
     // if one breakpoint is not enough for you
-    screens: {
-      sm: "640px",
-    },
+  
 
     extend: {
       textColor: {
@@ -25,6 +23,9 @@ module.exports = {
           accent: withOpacity("--color-accent"),
           inverted: withOpacity("--color-fill"),
         },
+      },
+      gridTemplateColumns: {
+        desktop: "1fr 6fr",
       },
       backgroundColor: {
         skin: {
@@ -76,6 +77,21 @@ module.exports = {
           },
         },
       },
+
+      keyframes: {
+        wave: {
+          '0%': { transform: 'rotate(0deg)' },
+          '15%': { transform: 'rotate(14deg)' },
+          '30%': { transform: 'rotate(-8deg)' },
+          '40%': { transform: 'rotate(14deg)' },
+          '50%': { transform: 'rotate(-4deg)' },
+          '60%': { transform: 'rotate(10deg)' },
+          '70%,100%': { transform: 'rotate(0deg)' },
+        }
+      },
+      animation: {
+        wave: 'wave 1s ease-in-out infinite',
+      }
     },
   },
   plugins: [require("@tailwindcss/typography")],
