@@ -24,12 +24,19 @@ export const POST: APIRoute = async ({ request }) => {
 
   const [error, success] = await promiseAwait(
     transporter.sendMail({
-      from: `"网站表单" <${email}>`,
+      from: `"网站通知系统" <${import.meta.env.SMTP_USER}>`,
       to: import.meta.env.EMAIL,
       subject: `新消息通知， 来自：<${email}>`,
-      text: message,
+      html: `
+            <p>来自用户：${email}</p>
+            <p>留言内容：</p>
+            <pre>${message}</pre>
+            `,
+      replyTo: email, // 设置回复地址为用户邮箱
     })
   );
+
+  console.log(error);
 
   return new Response(null, {
     status: 302,
