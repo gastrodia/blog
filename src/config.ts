@@ -53,6 +53,12 @@ export const SOCIALS: SocialObjects = [
     linkTitle: `Send an email to ${SITE.title}`,
     active: true,
   },
+  {
+    name: "Instagram",
+    href: "https://photo.jiajiwei.top/",
+    linkTitle: `My Photo`,
+    active: true,
+  },
 ];
 
 export const SKILLS = [
@@ -147,17 +153,17 @@ export const PROJECTS = [
   },
   {
     title: "Three.js Note",
-    href: "https://rs.jiajiwei.top",
+    href: "https://gastrodia.github.io/learn-three",
     tags: "Three.js",
     desc: "Notes on learning the three.js framework",
     github: "https://github.com/gastrodia/learn-three",
     wip: false,
   },
   {
-    title: "Share new features of Vue",
-    href: "https://rs.jiajiwei.top",
+    title: "Share Vue3.0",
+    href: "https://gastrodia.github.io/demo",
     tags: "Vue",
-    desc: "Let my colleagues learn about Vue3.0 quickly",
+    desc: "Learn about Vue3.0 quickly",
     github: "https://github.com/gastrodia/demo",
     wip: false,
   },

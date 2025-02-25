@@ -1,5 +1,7 @@
 ---
 import LinkButton from "@components/LinkButton.astro"
+import socialIcons from "@assets/socialIcons";
+import {TagIcon} from "@components/icons"
 
 export interface ProjectProps {
   title: string;
@@ -15,15 +17,24 @@ const { title, href, github, desc, tags } = Astro.props;
 
 <li class="project-item ">
   <div class="flex items-center justify-between">
-    <LinkButton className="hover:text-skin-accent underline underline-offset-4 decoration-dashed" href={href} target="_blank">{title}</LinkButton>
-    <LinkButton className="hover:text-skin-accent underline underline-offset-4 decoration-dashed" href={github} target="_blank"> GITHUB </LinkButton>
+    <LinkButton className="link font-black" href={href} target="_blank">{title}</LinkButton>
+    <LinkButton href={github} className="link-icon" target="_blank"> 
+      <Fragment set:html={socialIcons.Github} />
+    </LinkButton>
   </div>
   <p class="py-2 text-sm">{desc}</p>
-  <p>{tags}</p>
+  <p class="text-xs">
+    <label><TagIcon /></label>
+    <span>{tags}</span>
+  </p>
 </li>
 
 <style>
   .project-item {
     @apply outline-2 outline-offset-1 outline-skin-fill focus-visible:no-underline focus-visible:outline-dashed block border border-skin-line p-4;
+  }
+
+  .link {
+    @apply hover:text-skin-accent underline underline-offset-4 decoration-dashed;
   }
 </style>

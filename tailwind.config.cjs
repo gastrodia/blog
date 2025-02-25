@@ -87,10 +87,17 @@ module.exports = {
           '50%': { transform: 'rotate(-4deg)' },
           '60%': { transform: 'rotate(10deg)' },
           '70%,100%': { transform: 'rotate(0deg)' },
+        },
+        shake: {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '25%': { transform: 'translateX(-4px)' },
+          '50%': { transform: 'translateX(4px)' },
+          '75%': { transform: 'translateX(-2px)' }
         }
       },
       animation: {
         wave: 'wave 1s ease-in-out infinite',
+        shake: 'shake 1s ease-in-out infinite'
       }
     },
   },
