@@ -5,6 +5,7 @@ import remarkToc from "remark-toc";
 import remarkCollapse from "remark-collapse";
 import sitemap from "@astrojs/sitemap";
 import { SITE } from "./src/config";
+import vercel from '@astrojs/vercel';
 
 // https://astro.build/config
 export default defineConfig({
@@ -44,4 +45,5 @@ export default defineConfig({
   },
 
   scopedStyleStrategy: "where",
+  adapter: vercel(),
 });
