@@ -1,0 +1,53 @@
+---
+import { SKILLS, EDUCATION, SITE } from "@config";
+import GetResume from "@components/GetResume.astro";
+---
+
+<section id="about-me" class="scroll-mt-16">
+  <div class="hidden lg:flex justify-end mb-2">
+    <GetResume />
+  </div>
+  <div class="lg:grid-cols-desktop grid grid-cols-1 gap-x-10 gap-y-6">
+    <div class="flex justify-between gap-2 flex-wrap">
+      <label class="whitespace-nowrap text-3xl font-bold lg:text-right">
+        ABOUT ME
+      </label>
+      <div class="block lg:hidden">
+        <GetResume />
+      </div>
+    </div>
+    <div class="space-y-2">
+        <Fragment set:html={SITE.aboutMe} />
+    </div>
+    <label class="text-xl font-bold lg:text-right"> SKILLS </label>
+    <ul class="grid grid-cols-2 gap-6 sm:grid-cols-3">
+      {
+        SKILLS.map(skill => {
+          const Logo = skill.logo;
+          return (
+            <li>
+              <Logo />
+              <span>{skill.name}</span>
+            </li>
+          );
+        })
+      }
+    </ul>
+    <label class="text-xl font-bold lg:text-right"> EDUCATION </label>
+    <ul>
+      {
+        EDUCATION.map(item => (
+          <li>
+            <div class="">{item.school}</div>
+            <div class="text-sm">
+              <span>{item.start}</span>
+              <span>~</span>
+              <span>{item.end}</span>
+            </div>
+            <p>{item.description}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>

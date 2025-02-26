@@ -24,8 +24,13 @@ export const SITE: Site = {
   desc: "记录与分享我的前端生活。",
   title: "Code_You",
   ogImage: "astropaper-og.jpg",
-  lightAndDarkMode: true,
   postPerPage: 10,
+  synopsis: "Full Stack Web Developer",
+  aboutMe: `
+      Hi, I'm <mark>Jia Jiwei</mark>, born in 1997. Currently working in
+      Shenzhen, Guangdong. As a Web Developer, This space documents my
+      professional expertise and career journey.
+  `,
 };
 
 const LANG = "zh-CN";

@@ -1,0 +1,65 @@
+---
+import { ArrowDownIcon } from "@components/icons";
+import LinkButton from "@components/LinkButton.astro";
+import {SITE} from "@config"
+
+---
+
+<div class="screen">
+  <div></div>
+  <div class="profile">
+    <div class="avatar">
+      <img src="/assets/images/about/self.jpg" alt="" />
+    </div>
+    <div class="greet">
+      <h2 class="animate__animated animate__fadeInUp animate__delay-1s">
+        <span>Hi, I'm { SITE.author } </span>
+        <span class="inline-block animate-wave">👋</span>
+      </h2>
+      <h3 class="animate__animated animate__fadeInUp animate__delay-2s">
+        { SITE.synopsis }
+      </h3>
+      <LinkButton
+        className="animate__animated animate__fadeInUp animate__delay-3s blog"
+        href="/posts">Blogs</LinkButton
+      >
+    </div>
+  </div>
+  <a href="#about-me" class="animate-bounce pb-2 sm:block">
+    <ArrowDownIcon />
+  </a>
+</div>
+
+<style>
+  .screen {
+    @apply bg-skin-card w-full flex flex-col items-center justify-between sm:h-screen;
+  }
+
+  .profile {
+    @apply mt-12 mb-4 sm:mt-14 sm:mb-14 flex flex-col items-center gap-y-5 gap-x-10 sm:flex-row;
+  }
+
+  .avatar {
+    @apply sm:w-52 sm:h-52  h-24 w-24 rounded-full flex items-center overflow-hidden;
+  }
+
+  .avatar img {
+    @apply w-full scale-150;
+  }
+
+  .greet {
+    @apply space-y-2 text-center sm:text-left;
+  }
+
+  .greet h2 {
+    @apply text-2xl sm:text-4xl;
+  }
+
+  .greet h3 {
+    @apply text-lg sm:text-lg;
+  }
+
+  .blog {
+    @apply text-2xl sm:text-4xl hover:text-skin-accent underline underline-offset-4 decoration-dashed;
+  }
+</style>
