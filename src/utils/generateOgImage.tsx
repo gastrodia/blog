@@ -1,8 +1,8 @@
 import satori from "satori";
 import type { SatoriOptions } from "satori";
 import { SITE } from "@config";
-import { writeFile } from "node:fs/promises";
 import { Resvg } from "@resvg/resvg-js";
+import type { InferEntrySchema } from "astro:content";
 
 const fetchFonts = async () => {
   // Regular Font
@@ -131,21 +131,14 @@ const options: SatoriOptions = {
   ],
 };
 
-const generateOgImage = async (mytext = SITE.title) => {
+const generateOgImage = async (props: InferEntrySchema<"blog">) => {
+  if (import.meta.env.MODE !== "production") return;
+  const mytext = props.title || SITE.title;
   const svg = await satori(ogImage(mytext), options);
-
-  // render png in production mode
-  if (import.meta.env.MODE === "production") {
-    const resvg = new Resvg(svg);
-    const pngData = resvg.render();
-    const pngBuffer = pngData.asPng();
-
-    console.info("Output PNG Image  :", `${mytext}.png`);
-
-    await writeFile(`./dist/${mytext}.png`, pngBuffer);
-  }
-
-  return svg;
+  const resvg = new Resvg(svg);
+  const pngData = resvg.render();
+  const pngBuffer = pngData.asPng();
+  return pngBuffer;
 };
 
 export default generateOgImage;

@@ -1,9 +1,10 @@
 import { getCollection } from "astro:content";
 import generateOgImage from "@utils/generateOgImage";
 import type { APIRoute } from "astro";
+import type { InferEntrySchema } from "astro:content";
 
-export const GET: APIRoute = async ({ params }) => {
-  const img = await generateOgImage(params.ogTitle);
+export const GET: APIRoute<InferEntrySchema<"blog">> = async ({ props }) => {
+  const img = await generateOgImage(props);
   return new Response(img);
 };
 
@@ -14,6 +15,7 @@ export function getStaticPaths() {
   return posts
     .filter(({ data }) => !data.ogImage)
     .map(({ data }) => ({
-      params: { ogTitle: data.title },
+      params: { slug: data.postSlug },
+      props: data,
     }));
 }
