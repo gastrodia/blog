@@ -23,7 +23,7 @@ export const SITE: Site = {
   author: "Code_You",
   desc: "记录与分享我的前端生活。",
   title: "Code_You",
-  ogImage: "astropaper-og.jpg",
+  ogImage: "cover.png",
   postPerPage: 10,
   synopsis: "Full Stack Web Developer",
   aboutMe: `
