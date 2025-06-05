@@ -2,7 +2,7 @@
 # see: https://developers.google.com/idx/guides/customize-idx-env
 { pkgs, ... }: {
   # Which nixpkgs channel to use.
-  channel = "stable-24.05"; # or "unstable"
+  channel = "unstable"; # or "unstable"
 
   # Use https://search.nixos.org/packages to find packages
   packages = [
@@ -11,7 +11,8 @@
     # pkgs.python311Packages.pip
     # pkgs.nodejs_20
     # pkgs.nodePackages.nodemon
-    pkgs.pnpm
+    # pkgs.pnpm
+    pkgs.bun
   ];
 
   # Sets environment variables in the workspace
@@ -46,12 +47,12 @@
       # Runs when a workspace is first created
       onCreate = {
         # Example: install JS dependencies from NPM
-        npm-install = "pnpm install";
+        npm-install = "bun install";
       };
       # Runs when the workspace is (re)started
       onStart = {
         # Example: start a background task to watch and re-build backend code
-        dev = "pnpm run dev";
+        dev = "bun run dev";
       };
     };
   };

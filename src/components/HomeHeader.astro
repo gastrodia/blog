@@ -1,0 +1,29 @@
+---
+import ThemeToggle from "@components/ThemeToggle";
+import LinkButton from "@components/LinkButton.astro";
+import { SITE } from "@config";
+---
+
+<header>
+  <h1>
+    <a href="/">{SITE.title}</a>
+  </h1>
+  <div class="grid items-center grid-cols-2 gap-4">
+    <LinkButton className="posts" href="/posts">Blogs</LinkButton>
+    <ThemeToggle client:load />
+  </div>
+</header>
+
+<style>
+  header {
+    @apply bg-skin-card w-full h-14 flex items-center px-4 sticky top-0 z-10 -mb-12 sm:-mb-14;
+  }
+
+  header .posts {
+    @apply text-center font-medium hover:text-skin-accent hover:underline underline-offset-4 decoration-dashed animate-shake;
+  }
+
+  h1 {
+    @apply flex-1 text-2xl;
+  }
+</style>

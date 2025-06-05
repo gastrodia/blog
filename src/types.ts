@@ -7,6 +7,7 @@ export type Site = {
   aboutMe: string;
   synopsis: string;
   postPerPage: number;
+  resumeName: string;
 };
 
 export type SocialObjects = {

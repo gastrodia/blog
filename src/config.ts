@@ -31,6 +31,7 @@ export const SITE: Site = {
       Shenzhen, Guangdong. As a Web Developer, This space documents my
       professional expertise and career journey.
   `,
+  resumeName: `前端开发工程师_贾继伟`,
 };
 
 const LANG = "zh-CN";
