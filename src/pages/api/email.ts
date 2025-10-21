@@ -60,7 +60,7 @@ export const POST: APIRoute = async ({ request }) => {
     },
   });
 
-  const [error, success] = await promiseAwait(
+  const [error] = await promiseAwait(
     transporter.sendMail({
       from: `"网站通知系统" <${import.meta.env.SMTP_USER}>`,
       to: import.meta.env.EMAIL,

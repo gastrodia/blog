@@ -143,11 +143,11 @@ export const EDUCATION = [
 export const PROJECTS = [
   {
     title: "Blog",
-    href: "https://jiajiwei.top",
+    href: "/posts",
     tags: "Astro",
     desc: "This website",
     github: "https://github.com/gastrodia/blog",
-    wip: false,
+    wip: true,
   },
   {
     title: "Rust Note",
@@ -155,7 +155,7 @@ export const PROJECTS = [
     tags: "Rust",
     desc: "Notes on learning the rust language",
     github: "https://github.com/gastrodia/note-rust",
-    wip: false,
+    wip: true,
   },
   {
     title: "Three.js Note",
@@ -163,7 +163,7 @@ export const PROJECTS = [
     tags: "Three.js",
     desc: "Notes on learning the three.js framework",
     github: "https://github.com/gastrodia/learn-three",
-    wip: false,
+    wip: true,
   },
   {
     title: "Share Vue3.0",
@@ -171,6 +171,14 @@ export const PROJECTS = [
     tags: "Vue",
     desc: "Learn about Vue3.0 quickly",
     github: "https://github.com/gastrodia/demo",
+    wip: false,
+  },
+  {
+    title: "Deno p2p chat",
+    href: "https://deno-p2p-chat.deno.dev/",
+    tags: "Deno,DenoKV,Fresh",
+    desc: "An instant messaging system based on Deno, Fresh, DenoKV, and daisyui.",
+    github: "https://github.com/gastrodia/deno-p2p-chat",
     wip: false,
   },
 ];

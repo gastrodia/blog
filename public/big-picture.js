@@ -29,12 +29,12 @@ var BigPicture = (function () {
     L,
     E,
     A,
+    C,
     H,
     z,
-    C,
     I = [],
-    O = {},
-    D = "appendChild",
+    D = {},
+    O = "appendChild",
     V = "createElement",
     N = "removeChild";
   function W() {
@@ -55,7 +55,7 @@ var BigPicture = (function () {
     var n = A.length - 1;
     if (!u) {
       if ((t > 0 && E === n) || (t < 0 && !E)) {
-        if (!C.loop)
+        if (!z.loop)
           return (
             j(i, ""),
             void setTimeout(
@@ -72,29 +72,26 @@ var BigPicture = (function () {
       if (
         ([(E = Math.max(0, Math.min(E + t, n))) - 1, E, E + 1].forEach(
           function (t) {
-            if (((t = Math.max(0, Math.min(t, n))), !O[t])) {
+            if (((t = Math.max(0, Math.min(t, n))), !D[t])) {
               var e = A[t].src,
                 o = document[V]("IMG");
               o.addEventListener("load", F.bind(null, e)),
                 (o.src = e),
-                (O[t] = o);
+                (D[t] = o);
             }
           }
         ),
-        O[E].complete)
+        D[E].complete)
       )
         return B(t);
       (u = 1),
         j(m, "opacity:.4;"),
-        e[D](m),
-        (O[E].onload = function () {
+        e[O](m),
+        (D[E].onload = function () {
           y && B(t);
         }),
-        (O[E].onerror = function () {
-          (A[E] = {
-            error: "Error loading image",
-          }),
-            y && B(t);
+        (D[E].onerror = function () {
+          (A[E] = { error: "Error loading image" }), y && B(t);
         });
     }
   }
@@ -105,23 +102,23 @@ var BigPicture = (function () {
     else {
       var a = e.querySelector("img:last-of-type");
       j(
-        (i = o = O[E]),
+        (i = o = D[E]),
         "animation:" +
           (n > 0 ? "bpfl" : "bpfr") +
           " .35s;transition:transform .35s"
       ),
         j(a, "animation:" + (n > 0 ? "bpfol" : "bpfor") + " .35s both"),
-        e[D](i),
+        e[O](i),
         r.el && (t = r.el);
     }
-    (H.innerHTML = E + 1 + "/" + A.length), X(A[E].caption), M && M([i, A[E]]);
+    (C.innerHTML = E + 1 + "/" + A.length), X(A[E].caption), M && M([i, A[E]]);
   }
   function P() {
     var t,
       n,
       e = 0.95 * window.innerHeight,
       o = 0.95 * window.innerWidth,
-      i = C.dimensions || [1920, 1080],
+      i = z.dimensions || [1920, 1080],
       r = i[0],
       a = i[1],
       p = a / r;
@@ -135,11 +132,11 @@ var BigPicture = (function () {
           o.play();
         }, 99))
       : o.error
-      ? U(t)
-      : (f = setTimeout(G, 35, t));
+        ? U(t)
+        : (f = setTimeout(G, 35, t));
   }
   function R(n) {
-    C.noLoader ||
+    z.noLoader ||
       (n &&
         j(
           m,
@@ -153,7 +150,7 @@ var BigPicture = (function () {
             t.clientWidth +
             "px"
         ),
-      t.parentElement[n ? D : N](m),
+      t.parentElement[n ? O : N](m),
       (u = n));
   }
   function X(t) {
@@ -167,8 +164,8 @@ var BigPicture = (function () {
     if ((u && R(), T && T(), "string" == typeof t))
       return (
         $(),
-        C.onError
-          ? C.onError()
+        z.onError
+          ? z.onError()
           : alert("Error: The requested " + t + " could not be loaded.")
       );
     _ && F(s),
@@ -208,26 +205,26 @@ var BigPicture = (function () {
       for (var t = e.querySelectorAll("img"), n = 0; n < t.length; n++)
         e[N](t[n]);
       u && e[N](m),
-        e[N](H),
+        e[N](C),
         (y = A = 0),
-        (O = {}),
-        z || e[N](S),
-        z || e[N](L),
+        (D = {}),
+        H || e[N](S),
+        H || e[N](L),
         (i.onload = U),
         (i.onerror = U.bind(null, "image"));
     }
-    C.onClose && C.onClose(), (w = u = 0);
+    z.onClose && z.onClose(), (w = u = 0);
   }
   function j(t, n) {
     t.style.cssText = n;
   }
   return function (w) {
-    var O;
+    var D;
     return (
       n ||
-        (function () {
-          var t, s;
-          function d(t) {
+        (function (t) {
+          var s, d;
+          function f(t) {
             var n = document[V]("button");
             return (
               (n.className = t),
@@ -236,7 +233,7 @@ var BigPicture = (function () {
               n
             );
           }
-          function f(t, n) {
+          function h(t, n) {
             var e = document[V]("button");
             return (
               (e.className = "bp-lr"),
@@ -249,27 +246,29 @@ var BigPicture = (function () {
               e
             );
           }
-          var h = document[V]("STYLE");
-          (h.innerHTML =
-            "#bp_caption,#bp_container{bottom:0;left:0;right:0;position:fixed;opacity:0}#bp_container>*,#bp_loader{position:absolute;right:0;z-index:10}#bp_container,#bp_caption,#bp_container svg{pointer-events:none}#bp_container{top:0;z-index:9999;background:rgba(0,0,0,.7);opacity:0;transition:opacity .35s}#bp_loader{top:0;left:0;bottom:0;display:flex;align-items:center;cursor:wait;background:0;z-index:9}#bp_loader svg{width:50%;max-width:300px;max-height:50%;margin:auto;animation:bpturn 1s infinite linear}#bp_aud,#bp_container img,#bp_sv,#bp_vid{user-select:none;max-height:96%;max-width:96%;top:0;bottom:0;left:0;margin:auto;box-shadow:0 0 3em rgba(0,0,0,.4);z-index:-1}#bp_sv{background:#111}#bp_sv svg{width:66px}#bp_caption{font-size:.9em;padding:1.3em;background:rgba(15,15,15,.94);color:#fff;text-align:center;transition:opacity .3s}#bp_aud{width:650px;top:calc(50% - 20px);bottom:auto;box-shadow:none}#bp_count{left:0;right:auto;padding:14px;color:rgba(255,255,255,.7);font-size:22px;cursor:default}#bp_container button{position:absolute;border:0;outline:0;background:0;cursor:pointer;transition:all .1s}#bp_container>.bp-x{padding:0;height:41px;width:41px;border-radius:100%;top:8px;right:14px;opacity:.8;line-height:1}#bp_container>.bp-x:focus,#bp_container>.bp-x:hover{background:rgba(255,255,255,.2)}.bp-x svg,.bp-xc svg{height:21px;width:20px;fill:#fff;vertical-align:top;}.bp-xc svg{width:16px}#bp_container .bp-xc{left:2%;bottom:100%;padding:9px 20px 7px;background:#d04444;border-radius:2px 2px 0 0;opacity:.85}#bp_container .bp-xc:focus,#bp_container .bp-xc:hover{opacity:1}.bp-lr{top:50%;top:calc(50% - 130px);padding:99px 0;width:6%;background:0;border:0;opacity:.4;transition:opacity .1s}.bp-lr:focus,.bp-lr:hover{opacity:.8}@keyframes bpf{50%{transform:translatex(15px)}100%{transform:none}}@keyframes bpl{50%{transform:translatex(-15px)}100%{transform:none}}@keyframes bpfl{0%{opacity:0;transform:translatex(70px)}100%{opacity:1;transform:none}}@keyframes bpfr{0%{opacity:0;transform:translatex(-70px)}100%{opacity:1;transform:none}}@keyframes bpfol{0%{opacity:1;transform:none}100%{opacity:0;transform:translatex(-70px)}}@keyframes bpfor{0%{opacity:1;transform:none}100%{opacity:0;transform:translatex(70px)}}@keyframes bpturn{0%{transform:none}100%{transform:rotate(360deg)}}@media (max-width:600px){.bp-lr{font-size:15vw}}"),
-            document.head[D](h),
+          var w = document[V]("STYLE");
+          (w.innerHTML =
+            "#bp_caption,#bp_container{bottom:0;left:0;right:0;position:fixed;opacity:0}#bp_container>*,#bp_loader{position:absolute;right:0;z-index:10}#bp_container,#bp_caption,#bp_container svg{pointer-events:none}#bp_container{top:0;z-index:9999;background:" +
+            (t && t.overlayColor ? t.overlayColor : "rgba(0,0,0,.7)") +
+            ";opacity:0;transition:opacity .35s}#bp_loader{top:0;left:0;bottom:0;display:flex;align-items:center;cursor:wait;background:0;z-index:9}#bp_loader svg{width:50%;max-width:300px;max-height:50%;margin:auto;animation:bpturn 1s infinite linear}#bp_aud,#bp_container img,#bp_sv,#bp_vid{user-select:none;max-height:96%;max-width:96%;top:0;bottom:0;left:0;margin:auto;box-shadow:0 0 3em rgba(0,0,0,.4);z-index:-1}#bp_sv{background:#111}#bp_sv svg{width:66px}#bp_caption{font-size:.9em;padding:1.3em;background:rgba(15,15,15,.94);color:#fff;text-align:center;transition:opacity .3s}#bp_aud{width:650px;top:calc(50% - 20px);bottom:auto;box-shadow:none}#bp_count{left:0;right:auto;padding:14px;color:rgba(255,255,255,.7);font-size:22px;cursor:default}#bp_container button{position:absolute;border:0;outline:0;background:0;cursor:pointer;transition:all .1s}#bp_container>.bp-x{padding:0;height:41px;width:41px;border-radius:100%;top:8px;right:14px;opacity:.8;line-height:1}#bp_container>.bp-x:focus,#bp_container>.bp-x:hover{background:rgba(255,255,255,.2)}.bp-x svg,.bp-xc svg{display:inline;height:21px;width:20px;fill:#fff;vertical-align:top;}.bp-xc svg{width:16px}#bp_container .bp-xc{left:2%;bottom:100%;padding:9px 20px 7px;background:#d04444;border-radius:2px 2px 0 0;opacity:.85}#bp_container .bp-xc:focus,#bp_container .bp-xc:hover{opacity:1}.bp-lr{top:50%;top:calc(50% - 130px);padding:99px 0;width:6%;background:0;border:0;opacity:.4;transition:opacity .1s}.bp-lr:focus,.bp-lr:hover{opacity:.8}@keyframes bpf{50%{transform:translatex(15px)}100%{transform:none}}@keyframes bpl{50%{transform:translatex(-15px)}100%{transform:none}}@keyframes bpfl{0%{opacity:0;transform:translatex(70px)}100%{opacity:1;transform:none}}@keyframes bpfr{0%{opacity:0;transform:translatex(-70px)}100%{opacity:1;transform:none}}@keyframes bpfol{0%{opacity:1;transform:none}100%{opacity:0;transform:translatex(-70px)}}@keyframes bpfor{0%{opacity:1;transform:none}100%{opacity:0;transform:translatex(70px)}}@keyframes bpturn{0%{transform:none}100%{transform:rotate(360deg)}}@media (max-width:600px){.bp-lr{font-size:15vw}}"),
+            document.head[O](w),
             ((e = document[V]("DIV")).id = "bp_container"),
             (e.onclick = Y),
-            (l = d("bp-x")),
-            e[D](l),
+            (l = f("bp-x")),
+            e[O](l),
             "ontouchend" in window &&
               window.visualViewport &&
-              ((z = 1),
-              (e.ontouchstart = function (n) {
-                var e = n.touches,
-                  o = n.changedTouches;
-                (s = e.length > 1), (t = o[0].pageX);
+              ((H = 1),
+              (e.ontouchstart = function (t) {
+                var n = t.touches,
+                  e = t.changedTouches;
+                (d = n.length > 1), (s = e[0].pageX);
               }),
-              (e.ontouchend = function (n) {
-                var e = n.changedTouches;
-                if (y && !s && window.visualViewport.scale <= 1) {
-                  var o = e[0].pageX - t;
-                  o < -30 && q(1), o > 30 && q(-1);
+              (e.ontouchend = function (t) {
+                var n = t.changedTouches;
+                if (y && !d && window.visualViewport.scale <= 1) {
+                  var e = n[0].pageX - s;
+                  e < -30 && q(1), e > 30 && q(-1);
                 }
               })),
             (i = document[V]("IMG")),
@@ -280,15 +279,15 @@ var BigPicture = (function () {
             ((a = document[V]("audio")).id = "bp_aud"),
             (a.controls = 1),
             (a.loop = 1),
-            ((H = document[V]("span")).id = "bp_count"),
+            ((C = document[V]("span")).id = "bp_count"),
             ((b = document[V]("DIV")).id = "bp_caption"),
-            ((x = d("bp-xc")).onclick = X.bind(null, 0)),
-            b[D](x),
+            ((x = f("bp-xc")).onclick = X.bind(null, 0)),
+            b[O](x),
             (g = document[V]("SPAN")),
-            b[D](g),
-            e[D](b),
-            (S = f(1, "transform:scalex(-1)")),
-            (L = f(-1, "left:0;right:auto")),
+            b[O](g),
+            e[O](b),
+            (S = h(1, "transform:scalex(-1)")),
+            (L = h(-1, "left:0;right:auto")),
             ((m = document[V]("DIV")).id = "bp_loader"),
             (m.innerHTML =
               '<svg viewbox="0 0 32 32" fill="#fff" opacity=".8"><path d="M16 0a16 16 0 0 0 0 32 16 16 0 0 0 0-32m0 4a12 12 0 0 1 0 24 12 12 0 0 1 0-24" fill="#000" opacity=".5"/><path d="M16 0a16 16 0 0 1 16 16h-4A12 12 0 0 0 16 4z"/></svg>'),
@@ -302,7 +301,7 @@ var BigPicture = (function () {
               p,
               "border:0;position:absolute;height:100%;width:100%;left:0;top:0"
             ),
-            c[D](p),
+            c[O](p),
             (i.onload = U),
             (i.onerror = U.bind(null, "image")),
             window.addEventListener("resize", function () {
@@ -328,9 +327,9 @@ var BigPicture = (function () {
               1
             ),
             (n = 1);
-        })(),
+        })(w),
       u && (clearTimeout(f), $()),
-      (C = w),
+      (z = w),
       (d = w.ytSrc || w.vimeoSrc),
       (T = w.animationStart),
       (k = w.animationEnd),
@@ -339,7 +338,7 @@ var BigPicture = (function () {
       (h = (t = w.el).getAttribute("data-caption")),
       w.gallery
         ? (function (n, r) {
-            var a = C.galleryAttribute || "data-bp";
+            var a = z.galleryAttribute || "data-bp";
             if (Array.isArray(n)) (A = n), (h = n[(E = r || 0)].caption);
             else {
               var c = (A = [].slice.call(
@@ -359,57 +358,60 @@ var BigPicture = (function () {
             (_ = 1),
               !~I.indexOf((s = A[E].src)) && R(1),
               A.length > 1
-                ? (e[D](H),
-                  (H.innerHTML = E + 1 + "/" + A.length),
-                  z || (e[D](S), e[D](L)))
+                ? (e[O](C),
+                  (C.innerHTML = E + 1 + "/" + A.length),
+                  H || (e[O](S), e[O](L)))
                 : (A = 0),
               ((o = i).src = s);
           })(w.gallery, w.position)
         : d || w.iframeSrc
-        ? ((o = c),
-          C.ytSrc
-            ? (W =
-                "https://www.youtube" +
-                (C.ytNoCookie ? "-nocookie" : "") +
-                ".com/embed/" +
-                d +
-                "?html5=1&rel=0&playsinline=1&autoplay=1")
-            : C.vimeoSrc
-            ? (W = "https://player.vimeo.com/video/" + d + "?autoplay=1")
-            : C.iframeSrc && (W = C.iframeSrc),
-          j(m, ""),
-          c[D](m),
-          (p.src = W),
-          P(),
-          setTimeout(U, 9))
-        : w.imgSrc
-        ? ((_ = 1), !~I.indexOf((s = w.imgSrc)) && R(1), ((o = i).src = s))
-        : w.audio
-        ? (R(1), ((o = a).src = w.audio), G("audio file"))
-        : w.vidSrc
-        ? (R(1),
-          w.dimensions && j(r, "width:" + w.dimensions[0] + "px"),
-          (O = w.vidSrc),
-          Array.isArray(O)
-            ? ((o = r.cloneNode()),
-              O.forEach(function (t) {
-                var n = document[V]("SOURCE");
-                (n.src = t),
-                  (n.type = "video/" + t.match(/.(\w+)$/)[1]),
-                  o[D](n);
-              }))
-            : ((o = r).src = O),
-          G("video"))
-        : ((o = i).src =
-            "IMG" === t.tagName
-              ? t.src
-              : window
-                  .getComputedStyle(t)
-                  .backgroundImage.replace(/^url|[(|)|'|"]/g, "")),
-      e[D](o),
-      document.body[D](e),
+          ? ((o = c),
+            z.ytSrc
+              ? (W =
+                  "https://www.youtube" +
+                  (z.ytNoCookie ? "-nocookie" : "") +
+                  ".com/embed/" +
+                  d +
+                  "?html5=1&rel=0&playsinline=1&autoplay=1")
+              : z.vimeoSrc
+                ? (W = "https://player.vimeo.com/video/" + d + "?autoplay=1")
+                : z.iframeSrc && (W = z.iframeSrc),
+            j(m, ""),
+            c[O](m),
+            (p.src = W),
+            P(),
+            setTimeout(U, 9))
+          : w.imgSrc
+            ? ((_ = 1), !~I.indexOf((s = w.imgSrc)) && R(1), ((o = i).src = s))
+            : w.audio
+              ? (R(1), ((o = a).src = w.audio), G("audio file"))
+              : w.vidSrc
+                ? (R(1),
+                  w.dimensions && j(r, "width:" + w.dimensions[0] + "px"),
+                  (D = w.vidSrc),
+                  Array.isArray(D)
+                    ? ((o = r.cloneNode()),
+                      D.forEach(function (t) {
+                        var n = document[V]("SOURCE");
+                        (n.src = t),
+                          (n.type = "video/" + t.match(/.(\w+)$/)[1]),
+                          o[O](n);
+                      }))
+                    : ((o = r).src = D),
+                  G("video"))
+                : ((o = i).src =
+                    "IMG" === t.tagName
+                      ? t.src
+                      : window
+                          .getComputedStyle(t)
+                          .backgroundImage.replace(/^url|[(|)|'|"]/g, "")),
+      e[O](o),
+      document.body[O](e),
       {
         close: Y,
+        opts: z,
+        updateDimensions: P,
+        display: o,
         next: function () {
           return q(1);
         },

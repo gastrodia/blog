@@ -1,7 +1,7 @@
 ---
-import LinkButton from "@components/LinkButton.astro"
+import LinkButton from "@components/LinkButton.astro";
 import socialIcons from "@assets/socialIcons";
-import {TagIcon} from "@components/icons"
+import { TagIcon } from "@components/icons";
 
 export interface ProjectProps {
   title: string;
@@ -12,14 +12,16 @@ export interface ProjectProps {
   wip?: boolean;
 }
 
-const { title, href, github, desc, tags } = Astro.props;
+const { title, href, github, desc, tags, wip } = Astro.props;
 ---
 
-<li class="project-item ">
+<li class="project-item">
   <div class="flex items-center justify-between">
-    <LinkButton className="link font-black" href={href} target="_blank">{title}</LinkButton>
-    <LinkButton href={github} className="link-icon" target="_blank"> 
-      <Fragment set:html={socialIcons.Github} />
+    <LinkButton className="link font-black" href={href} target="_blank"
+      >{title}</LinkButton
+    >
+    <LinkButton href={github} className="link-icon" target="_blank">
+      <Fragment set:html={socialIcons.GitText} />
     </LinkButton>
   </div>
   <p class="py-2 text-sm">{desc}</p>
@@ -27,14 +29,20 @@ const { title, href, github, desc, tags } = Astro.props;
     <label><TagIcon /></label>
     <span>{tags}</span>
   </p>
+  <!-- wip 斜着在右下角 -->
+  {wip ? <span class="wip">wip</span> : null}
 </li>
 
 <style>
   .project-item {
-    @apply outline-2 outline-offset-1 outline-skin-fill focus-visible:no-underline focus-visible:outline-dashed block border border-skin-line p-4;
+    @apply outline-2 outline-offset-1 outline-skin-fill focus-visible:no-underline focus-visible:outline-dashed block border border-skin-line p-4 relative;
   }
 
   .link {
     @apply hover:text-skin-accent underline underline-offset-4 decoration-dashed;
+  }
+
+  .wip {
+    @apply absolute top-0 right-0 bg-skin-accent text-skin-inverted text-xs px-2 rounded-bl-md;
   }
 </style>

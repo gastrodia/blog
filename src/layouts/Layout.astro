@@ -24,13 +24,15 @@ const socialImageURL = new URL(
 ).href;
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN" class="scroll-smooth">
   <head>
     <script is:inline>
       // 初始化主题色防止闪屏
       const saved = localStorage.getItem("theme");
-      const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const systemDark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
       const savedTheme = saved === "dark" ? "dark" : "light";
       const realTheme = savedTheme || (systemDark ? "dark" : "light");
       document.firstElementChild?.setAttribute("data-theme", realTheme);
@@ -53,22 +55,25 @@ const socialImageURL = new URL(
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:image" content={socialImageURL} />
-    
 
-    <link rel='stylesheet' href='/font-face.css' /> 
+    <link rel="stylesheet" href="/font-face.css" />
     <script is:inline src="/big-picture.js"></script>
     <script is:inline>
-        window.addEventListener('load', () => {
-          const images = document.querySelectorAll("main img")
-          Array.prototype.forEach.call(images, function (img) {
-              img.addEventListener("click", function () {
-                if(!BigPicture)return
-                BigPicture({
-                      el: img,
-                  });
-              });
+      window.addEventListener("load", () => {
+        const images = Array.from(document.querySelectorAll("main img"));
+        const gallery = images.map(img => ({ src: img.src }));
+
+        for (let i = 0; i < images.length; i++) {
+          const img = images[i];
+          img.addEventListener("click", () => {
+            BigPicture({
+              el: img,
+              position: i,
+              gallery,
+            });
           });
-        })
+        }
+      });
     </script>
   </head>
   <body>
