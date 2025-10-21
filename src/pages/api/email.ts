@@ -3,6 +3,20 @@ import nodemailer from "nodemailer";
 import promiseAwait from "@utils/promiseAwait";
 export const prerender = false;
 
+const redirectToResultPage = (success: boolean, message: string) => {
+  const result = success ? "success" : "error";
+  const urlParams = new URLSearchParams();
+  urlParams.set("message", message);
+  const params = urlParams.toString();
+  const url = `/contact/${result}${params ? `?${params}` : ""}`;
+  return new Response(null, {
+    status: 302,
+    headers: new Headers({
+      Location: url,
+    }),
+  });
+};
+
 export const POST: APIRoute = async ({ request }) => {
   const formData = await request.formData();
   const email = formData.get("email")?.toString() || "";
@@ -11,16 +25,19 @@ export const POST: APIRoute = async ({ request }) => {
     formData.get("cf-turnstile-response")?.toString() || "";
 
   if (!email || !message) {
-    return new Response(`email or message is empty!`);
+    return redirectToResultPage(false, "email or message is empty!");
   }
 
   if (!turnstileToken) {
-    return new Response(`please verify the captcha!`);
+    return redirectToResultPage(false, "please verify the captcha!");
   }
 
   const [turnstileError, turnstileResult] = await promiseAwait(
     fetch(`https://challenges.cloudflare.com/turnstile/v0/siteverify`, {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         secret: import.meta.env.TURNSTILE_SECRET_KEY,
         response: turnstileToken,
@@ -30,7 +47,7 @@ export const POST: APIRoute = async ({ request }) => {
   );
 
   if (turnstileError || !turnstileResult.success) {
-    return new Response(`verify captcha failed!`);
+    return redirectToResultPage(false, "verify captcha failed!");
   }
 
   const transporter = nodemailer.createTransport({
@@ -57,12 +74,8 @@ export const POST: APIRoute = async ({ request }) => {
     })
   );
 
-  console.log(error);
+  const errorMessage = error?.message || "An error occurred";
+  console.log("[error]: ", error);
 
-  return new Response(null, {
-    status: 302,
-    headers: new Headers({
-      Location: `/contact/${success ? "success" : "error"}`,
-    }),
-  });
+  return redirectToResultPage(success, errorMessage);
 };

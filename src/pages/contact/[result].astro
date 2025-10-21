@@ -17,7 +17,8 @@ export async function getStaticPaths() {
 }
 
 const {result} = Astro.params;
-const message = result === 'success' ? 'I have received your message and will get back to you later!' : 'An error has occurred, please try again!'
+const success = result === 'success';
+const message = success ? 'I have received your message and will get back to you later!' : 'An error has occurred, please try again!'
 ---
 
 <Layout title={`Result | ${result}`}>
@@ -27,8 +28,13 @@ const message = result === 'success' ? 'I have received your message and will ge
     <div class="not-found-wrapper">
       <h1 aria-label={result} class="uppercase">{result}</h1>
       <span aria-hidden="true">¯\_(ツ)_/¯</span>
-      <p>{message}</p>
-      <p>Don't send duplicates!</p>
+      <!-- 分割线 -->
+      <p class={success ? 'text-green-600' : 'text-red-600'}>
+        <span class="text-sm font-bold">{success ? '🙂' : '😭'}</span>
+        <span id="message">{message}</span>
+      </p>
+      <div class="h-1 w-full bg-gray-200 my-4"></div>
+      <span class=" text-gray-500">Don't send duplicates!</span>
       <LinkButton
         href="javascript:history.back()"
         className="my-6 underline decoration-dashed underline-offset-8 text-lg"
@@ -37,6 +43,12 @@ const message = result === 'success' ? 'I have received your message and will ge
       </LinkButton>
     </div>
   </main>
+  <script is:inline>
+    const message = new URLSearchParams(window.location.search).get("message");
+    if (message) {
+      document.getElementById('message').textContent = message;
+    }
+  </script>
 
   <Footer />
 </Layout>
