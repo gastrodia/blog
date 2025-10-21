@@ -74,8 +74,7 @@ export const POST: APIRoute = async ({ request }) => {
     })
   );
 
-  const errorMessage = error?.message || "An error occurred";
-  console.log("[error]: ", error);
+  const errorMessage = error?.message;
 
-  return redirectToResultPage(success, errorMessage);
+  return redirectToResultPage(!error, errorMessage);
 };
