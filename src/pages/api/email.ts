@@ -3,10 +3,10 @@ import nodemailer from "nodemailer";
 import promiseAwait from "@utils/promiseAwait";
 export const prerender = false;
 
-const redirectToResultPage = (success: boolean, message: string) => {
+const redirectToResultPage = (success: boolean, message?: string) => {
   const result = success ? "success" : "error";
   const urlParams = new URLSearchParams();
-  urlParams.set("message", message);
+  if (message) urlParams.set("message", message);
   const params = urlParams.toString();
   const url = `/contact/${result}${params ? `?${params}` : ""}`;
   return new Response(null, {
