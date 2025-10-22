@@ -1,6 +1,5 @@
 ---
 import LinkButton from "@components/LinkButton.astro";
-import socialIcons from "@assets/socialIcons";
 import { TagIcon } from "@components/icons";
 
 export interface ProjectProps {
@@ -20,16 +19,17 @@ const { title, href, github, desc, tags, wip } = Astro.props;
     <LinkButton className="link font-black" href={href} target="_blank"
       >{title}</LinkButton
     >
-    <LinkButton href={github} className="link-icon" target="_blank">
-      <Fragment set:html={socialIcons.GitText} />
-    </LinkButton>
   </div>
   <p class="py-2 text-sm">{desc}</p>
-  <p class="text-xs">
-    <label><TagIcon /></label>
-    <span>{tags}</span>
-  </p>
-  <!-- wip 斜着在右下角 -->
+  <div class="text-xs flex justify-between">
+    <p>
+      <label><TagIcon /></label>
+      <span>{tags}</span>
+    </p>
+    <LinkButton href={github} className="link-icon link" target="_blank">
+      Repo
+    </LinkButton>
+  </div>
   {wip ? <span class="wip">wip</span> : null}
 </li>
 
