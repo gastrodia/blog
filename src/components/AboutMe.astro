@@ -1,13 +1,14 @@
 ---
-import { SKILLS, EDUCATION, SITE } from "@config";
-import GetResume from "@components/GetResume.astro";
+import { SKILLS, EDUCATION, PROFILE } from "@/constants";
+import GetResume from "@/components/GetResume.astro";
+import { Icon } from "./Icon";
 ---
 
 <section id="about-me" class="scroll-mt-16">
   <div class="hidden lg:flex justify-end mb-2">
     <GetResume />
   </div>
-  <div class="lg:grid-cols-desktop grid grid-cols-1 gap-x-10 gap-y-6">
+  <div class="grid grid-cols-1 lg:grid-cols-[1fr_6fr] gap-x-10 gap-y-6">
     <div class="flex justify-between gap-2 flex-wrap">
       <label class="whitespace-nowrap text-3xl font-bold lg:text-right">
         ABOUT ME
@@ -17,7 +18,7 @@ import GetResume from "@components/GetResume.astro";
       </div>
     </div>
     <div class="space-y-2">
-        <Fragment set:html={SITE.aboutMe} />
+        <Fragment set:html={PROFILE.aboutMe} />
     </div>
     <label class="text-xl font-bold lg:text-right"> SKILLS </label>
     <ul class="grid grid-cols-2 gap-6 sm:grid-cols-3">
@@ -25,8 +26,8 @@ import GetResume from "@components/GetResume.astro";
         SKILLS.map(skill => {
           const Logo = skill.logo;
           return (
-            <li>
-              <Logo />
+            <li class="flex items-center gap-2">
+              <Icon className="size-6" name={Logo} />
               <span>{skill.name}</span>
             </li>
           );

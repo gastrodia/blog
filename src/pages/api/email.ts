@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import nodemailer from "nodemailer";
-import promiseAwait from "@utils/promiseAwait";
+import promiseAwait from "@/utils/promiseAwait";
 export const prerender = false;
 
 const redirectToResultPage = (success: boolean, message?: string) => {

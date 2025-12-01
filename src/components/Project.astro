@@ -1,6 +1,6 @@
 ---
-import LinkButton from "@components/LinkButton.astro";
-import { TagIcon } from "@components/icons";
+import LinkButton from "@/components/LinkButton.astro";
+import { Icon } from "@/components/Icon";
 
 export interface ProjectProps {
   title: string;
@@ -14,35 +14,31 @@ export interface ProjectProps {
 const { title, href, github, desc, tags, wip } = Astro.props;
 ---
 
-<li class="project-item">
+<li
+  class="border p-4 flex flex-col relative"
+>
   <div class="flex items-center justify-between">
-    <LinkButton className="link font-black" href={href} target="_blank"
-      >{title}</LinkButton
+    <LinkButton
+      class="underline decoration-dashed underline-offset-4"
+      href={href}
+      target="_blank">{title}</LinkButton
     >
   </div>
-  <p class="py-2 text-sm">{desc}</p>
-  <div class="text-xs flex justify-between">
-    <p>
-      <label><TagIcon /></label>
+  <p class="py-2 text-sm flex-1">{desc}</p>
+  <div class="flex justify-between text-xs">
+    <p class="flex items-center gap-1">
+      <label><Icon name="Tag"  className="size-4"/></label>
       <span>{tags}</span>
     </p>
-    <LinkButton href={github} className="link-icon link" target="_blank">
+    <LinkButton href={github} class="link-icon link underline" target="_blank">
       Repo
     </LinkButton>
   </div>
-  {wip ? <span class="wip">wip</span> : null}
+  {
+    wip ? (
+      <span class="absolute top-0 right-0 rounded-bl-md bg-accent px-2 text-xs text-background">
+        wip
+      </span>
+    ) : null
+  }
 </li>
-
-<style>
-  .project-item {
-    @apply outline-2 outline-offset-1 outline-skin-fill focus-visible:no-underline focus-visible:outline-dashed block border border-skin-line p-4 relative;
-  }
-
-  .link {
-    @apply hover:text-skin-accent underline underline-offset-4 decoration-dashed;
-  }
-
-  .wip {
-    @apply absolute top-0 right-0 bg-skin-accent text-skin-inverted text-xs px-2 rounded-bl-md;
-  }
-</style>

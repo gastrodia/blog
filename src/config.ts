@@ -1,184 +1,47 @@
-import type { Site, SocialObjects } from "./types";
-import type { GiscusProps } from "@giscus/react";
-import {
-  TypescriptLogo,
-  PythonLogo,
-  ReactLogo,
-  LinuxLogo,
-  GitLogo,
-  JavascriptLogo,
-  VueLogo,
-  NodeLogo,
-  BunLogo,
-  RustLogo,
-  DenoLogo,
-  TailwindLogo,
-  ThreeJsLogo,
-  AngularLogo,
-  AstroLogo,
-} from "./components/icons";
+interface SiteConfig {
+  website: string;
+  author: string;
+  profile: string;
+  desc: string;
+  title: string;
+  ogImage: string;
+  lightAndDarkMode: boolean;
+  postPerIndex: number;
+  postPerPage: number;
+  scheduledPostMargin: number;
+  showArchives: boolean;
+  showBackButton: boolean;
+  editPost: {
+    enabled: boolean;
+    text: string;
+    url: string;
+  };
+  dynamicOgImage: boolean;
+  dir: "ltr" | "rtl" | "auto";
+  lang: string;
+  timezone: string;
+}
 
-export const SITE: Site = {
-  website: "https://jiajiwei.top/",
-  author: "Code_You",
-  desc: "记录与分享我的前端生活。",
+export const SITE: SiteConfig = {
+  website: "https://jiajiwei.top/", // replace this with your deployed domain
+  author: "gastrodia",
+  profile: "https://jiajiwei.top/",
+  desc: "Record my learning, life, work, and thinking", // 记录我的学习、生活、工作、思考
   title: "Code_You",
   ogImage: "cover.png",
+  lightAndDarkMode: true,
+  postPerIndex: 4,
   postPerPage: 10,
-  synopsis: "Full Stack Web Developer",
-  aboutMe: `
-      Hi, I'm <mark>Jia Jiwei</mark>, born in 1997. Currently working in
-      Shenzhen, Guangdong. As a Web Developer, This space documents my
-      professional expertise and career journey.
-  `,
-  resumeName: `前端开发工程师_贾继伟`,
-};
-
-const LANG = "zh-CN";
-
-export const GISCUS: GiscusProps = {
-  repo: "gastrodia/blog",
-  repoId: "R_kgDOJ1bm_g",
-  mapping: "pathname",
-  categoryId: "DIC_kwDOJ1bm_s4CnGP_",
-  lang: LANG,
-};
-
-export const LOCALE = [LANG]; // set to [] to use the environment default
-
-export const SOCIALS: SocialObjects = [
-  {
-    name: "Github",
-    href: "https://github.com/gastrodia",
-    linkTitle: ` ${SITE.title} on Github`,
-    active: true,
+  scheduledPostMargin: 15 * 60 * 1000, // 15 minutes
+  showArchives: true,
+  showBackButton: true, // show back button in post detail
+  editPost: {
+    enabled: true,
+    text: "Edit page",
+    url: "https://github.com/gastrodia/blog/edit/main/",
   },
-  {
-    name: "Mail",
-    href: "mailto:me@jiajiwei.top",
-    linkTitle: `Send an email to ${SITE.title}`,
-    active: true,
-  },
-  {
-    name: "Instagram",
-    href: "https://photo.jiajiwei.top/",
-    linkTitle: `My Photo`,
-    active: true,
-  },
-];
-
-export const SKILLS = [
-  {
-    name: "Javascript",
-    logo: JavascriptLogo,
-  },
-  {
-    name: "Typescript",
-    logo: TypescriptLogo,
-  },
-  {
-    name: "Vue",
-    logo: VueLogo,
-  },
-  {
-    name: "Angular",
-    logo: AngularLogo,
-  },
-  {
-    name: "React",
-    logo: ReactLogo,
-  },
-  {
-    name: "Astro",
-    logo: AstroLogo,
-  },
-  {
-    name: "ThreeJs",
-    logo: ThreeJsLogo,
-  },
-  {
-    name: "NodeJs",
-    logo: NodeLogo,
-  },
-  {
-    name: "Bun",
-    logo: BunLogo,
-  },
-  {
-    name: "Deno",
-    logo: DenoLogo,
-  },
-  {
-    name: "Tailwindcss",
-    logo: TailwindLogo,
-  },
-  {
-    name: "Rust",
-    logo: RustLogo,
-  },
-  {
-    name: "Python",
-    logo: PythonLogo,
-  },
-  {
-    name: "Linux/Bash",
-    logo: LinuxLogo,
-  },
-  {
-    name: "Git",
-    logo: GitLogo,
-  },
-];
-
-export const EDUCATION = [
-  {
-    school: "Wuhan Vocational College of Software and Engineering",
-    start: "2015.09",
-    end: "2018.06",
-    description:
-      "Here, I've learned Photoshop, Axure, HTML, CSS, JavaScript, and more. These have become the foundation of my life, helping me find my direction in life!",
-  },
-];
-
-export const PROJECTS = [
-  {
-    title: "Blog",
-    href: "/posts",
-    tags: "Astro",
-    desc: "This website",
-    github: "https://github.com/gastrodia/blog",
-    wip: true,
-  },
-  {
-    title: "Rust Note",
-    href: "https://rs.jiajiwei.top",
-    tags: "Rust",
-    desc: "Notes on learning the rust language",
-    github: "https://github.com/gastrodia/note-rust",
-    wip: true,
-  },
-  {
-    title: "Three.js Note",
-    href: "https://gastrodia.github.io/learn-three",
-    tags: "Three.js",
-    desc: "Notes on learning the three.js framework",
-    github: "https://github.com/gastrodia/learn-three",
-    wip: true,
-  },
-  {
-    title: "Share Vue3.0",
-    href: "https://gastrodia.github.io/demo",
-    tags: "Vue",
-    desc: "Learn about Vue3.0 quickly",
-    github: "https://github.com/gastrodia/demo",
-    wip: false,
-  },
-  {
-    title: "Deno p2p chat",
-    href: "https://deno-p2p-chat.deno.dev/",
-    tags: "Deno,DenoKV,Fresh",
-    desc: "An instant messaging system based on Deno, Fresh, DenoKV, and daisyui.",
-    github: "https://github.com/gastrodia/deno-p2p-chat",
-    wip: false,
-  },
-];
+  dynamicOgImage: true,
+  dir: "ltr", // "rtl" | "auto"
+  lang: "zh-CN", // html lang code. Set this empty and default will be "en"
+  timezone: "Asia/Shanghai", // Default global timezone (IANA format) https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+} as const;

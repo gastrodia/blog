@@ -1,0 +1,53 @@
+<div id="comments" data-pagefind-ignore></div>
+
+<script is:inline data-astro-rerun>
+  function loadGiscus() {
+    const commentsContainer = document.getElementById("comments");
+    if (!commentsContainer) return;
+
+    // 清空容器
+    commentsContainer.innerHTML = "";
+
+    // 创建 script 元素
+    const script = document.createElement("script");
+    script.src = "https://giscus.app/client.js";
+    script.setAttribute("data-repo", "gastrodia/blog");
+    script.setAttribute("data-repo-id", "R_kgDOJ1bm_g");
+    script.setAttribute("data-category", "General");
+    script.setAttribute("data-category-id", "DIC_kwDOJ1bm_s4CnGP_");
+    script.setAttribute("data-mapping", "pathname");
+    script.setAttribute("data-strict", "0");
+    script.setAttribute("data-reactions-enabled", "1");
+    script.setAttribute("data-emit-metadata", "0");
+    script.setAttribute("data-input-position", "bottom");
+    
+    // 根据当前主题设置 Giscus 主题
+    const currentTheme = document.documentElement.getAttribute("data-theme");
+    const theme = currentTheme === "dark" ? "dark" : "light";
+    script.setAttribute("data-theme", theme);
+    
+    script.setAttribute("data-lang", "zh-CN");
+    script.setAttribute("crossorigin", "anonymous");
+    script.async = true;
+
+    commentsContainer.appendChild(script);
+  }
+
+  // 首次加载时初始化
+  loadGiscus();
+
+  // View Transitions 页面切换后重新加载
+  document.addEventListener("astro:after-swap", loadGiscus);
+
+  // 监听全局主题变化事件（由 Layout.astro 统一派发）
+  window.addEventListener("theme-change", (event) => {
+    const iframe = document.querySelector("iframe.giscus-frame");
+    if (iframe && event.detail) {
+      iframe.contentWindow?.postMessage(
+        { giscus: { setConfig: { theme: event.detail.theme } } },
+        "https://giscus.app"
+      );
+    }
+  });
+</script>
+  

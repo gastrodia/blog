@@ -1,15 +1,13 @@
 ---
-import Layout from "@layouts/Layout.astro";
-import HomeHeader from "@components/HomeHeader.astro";
-import Footer from "@components/Footer.astro";
-import PDFViewer from "@components/PDFViewer.tsx";
-import {SITE} from "@config"
-import Button from "@components/Button.tsx"
-import { DownloadIcon } from "@components/icons.tsx"
+import Layout from "@/layouts/Layout.astro";
+import HomeHeader from "@/components/HomeHeader.astro";
+import Footer from "@/components/Footer.astro";
+import PDFViewer from "@/components/PDFViewer.tsx";
+import {PROFILE} from "@/constants"
+import Button from "@/components/Button.tsx"
+import {Icon} from "@/components/Icon"
 
-const PDF_PATH = "/resume.pdf";
-
-const {resumeName} = SITE
+const {resumeName, resume} = PROFILE
 ---
 
 <Layout>
@@ -18,15 +16,55 @@ const {resumeName} = SITE
     <section class="py-4 space-y-2">
       <div class="flex gap-2">
         <Button>
-          <a href={PDF_PATH} download={resumeName}>
-            <DownloadIcon />
-            Download
+          <a href={resume} download={resumeName} class="flex gap-1">
+            <Icon name="Download" className="size-6" />
+            <span>Download</span>
           </a>
         </Button>
       </div>
-      <div class="border min-h-10">
-        <PDFViewer client:only="react" file={PDF_PATH} fileName={resumeName} />
+      <div class="border min-h-[800px] relative">
+        <!-- 服务端渲染的骨架屏 -->
+        <div id="pdf-skeleton" class="absolute inset-0 bg-gray-50 dark:bg-gray-800 animate-pulse">
+          <div class="flex flex-col items-center justify-center h-full space-y-4 p-8">
+            <!-- PDF 图标 -->
+            <div class="w-20 h-24 bg-gray-300 dark:bg-gray-600 rounded-lg"></div>
+            <!-- 加载文字 -->
+            <div class="space-y-2 text-center">
+              <div class="h-4 w-32 bg-gray-300 dark:bg-gray-600 rounded mx-auto"></div>
+              <div class="h-3 w-24 bg-gray-300 dark:bg-gray-600 rounded mx-auto"></div>
+            </div>
+            <!-- 模拟页面内容 -->
+            <div class="w-full max-w-2xl space-y-3 pt-8">
+              <div class="h-3 bg-gray-300 dark:bg-gray-600 rounded w-full"></div>
+              <div class="h-3 bg-gray-300 dark:bg-gray-600 rounded w-5/6"></div>
+              <div class="h-3 bg-gray-300 dark:bg-gray-600 rounded w-4/6"></div>
+            </div>
+          </div>
+        </div>
+        <!-- React 组件加载后会替换骨架屏 -->
+        <PDFViewer client:only="react" file={resume} fileName={resumeName} transition:persist="resume"/>
       </div>
+      
+      <script>
+        // 当 React 组件挂载后，移除骨架屏
+        const observer = new MutationObserver(() => {
+          const pdfContent = document.querySelector('.react-pdf__Document');
+          if (pdfContent) {
+            const skeleton = document.getElementById('pdf-skeleton');
+            if (skeleton) {
+              skeleton.style.opacity = '0';
+              skeleton.style.transition = 'opacity 0.3s ease-out';
+              setTimeout(() => skeleton.remove(), 300);
+            }
+            observer.disconnect();
+          }
+        });
+        
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
+      </script>
     </section>
   </main>
   <Footer />

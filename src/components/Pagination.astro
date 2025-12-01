@@ -1,0 +1,38 @@
+---
+import type { Page } from "astro";
+import type { CollectionEntry } from "astro:content";
+import { Icon } from "./Icon";
+import LinkButton from "./LinkButton.astro";
+
+export interface Props {
+  page: Page<CollectionEntry<"blog">>;
+}
+
+const { page } = Astro.props;
+---
+
+{
+  page.lastPage > 1 && (
+    <nav class="mt-auto mb-8 flex justify-center" aria-label="Pagination">
+      <LinkButton
+        disabled={!page.url.prev}
+        href={page.url.prev as string}
+        class:list={["me-4 select-none", { "opacity-50": !page.url.prev }]}
+        ariaLabel="Previous"
+      >
+        <Icon name="ArrowLeft" className="size-4 stroke-2 inline-block rtl:rotate-180" />
+        Prev
+      </LinkButton>
+      {page.currentPage} / {page.lastPage}
+      <LinkButton
+        disabled={!page.url.next}
+        href={page.url.next as string}
+        class:list={["ms-4 select-none", { "opacity-50": !page.url.next }]}
+        ariaLabel="Next"
+      >
+        Next
+        <Icon name="ArrowRight" className="size-4 stroke-2 inline-block rtl:rotate-180" />
+      </LinkButton>
+    </nav>
+  )
+}
