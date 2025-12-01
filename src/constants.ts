@@ -1,5 +1,4 @@
 import { SITE } from "@/config";
-import type { GiscusProps } from "@giscus/react";
 
 interface Social {
   name: string;
@@ -8,13 +7,13 @@ interface Social {
   icon: string;
 }
 
-export const GISCUS: GiscusProps = {
+export const GISCUS = {
   repo: "gastrodia/blog",
   repoId: "R_kgDOJ1bm_g",
   mapping: "pathname",
   categoryId: "DIC_kwDOJ1bm_s4CnGP_",
   lang: SITE.lang,
-};
+} as const;
 
 export const PROFILE = {
   aboutMe: `
