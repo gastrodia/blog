@@ -35,7 +35,7 @@ const TURNSTILE_SITE_KEY = import.meta.env.TURNSTILE_SITE_KEY;
       focus:border-skin-accent focus:outline-none"
     />
   </div>
-  <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY}></div>
+  <div id="turnstile-container" class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY}></div>
   <input
     type="submit"
     class="border w-full border-skin-fill 
@@ -43,3 +43,102 @@ const TURNSTILE_SITE_KEY = import.meta.env.TURNSTILE_SITE_KEY;
     value="SEND"
   />
 </form>
+
+<script>
+  let turnstileWidgetId: string | undefined;
+
+  // 等待 Turnstile 脚本加载完成
+  function waitForTurnstile(timeout = 10000): Promise<any> {
+    return new Promise((resolve, reject) => {
+      // @ts-ignore
+      if (window.turnstile) {
+        // @ts-ignore
+        return resolve(window.turnstile);
+      }
+
+      const startTime = Date.now();
+      
+      const check = () => {
+        // @ts-ignore
+        if (window.turnstile) {
+          // @ts-ignore
+          resolve(window.turnstile);
+        } else if (Date.now() - startTime >= timeout) {
+          reject(new Error('Turnstile script load timeout'));
+        } else {
+          setTimeout(check, 100);
+        }
+      };
+
+      check();
+    });
+  }
+
+  async function initTurnstile() {
+    const container = document.getElementById('turnstile-container');
+    if (!container) return;
+
+    try {
+      const turnstile = await waitForTurnstile();
+      
+      // 清理旧的 widget（如果存在）
+      if (turnstileWidgetId !== undefined) {
+        try {
+          turnstile.remove(turnstileWidgetId);
+        } catch (e) {
+          console.log('Turnstile cleanup skipped');
+        }
+      }
+
+      // 清空容器
+      container.innerHTML = '';
+      
+      // 重新渲染 Turnstile
+      const sitekey = container.getAttribute('data-sitekey');
+      if (sitekey) {
+        turnstileWidgetId = turnstile.render('#turnstile-container', {
+          sitekey: sitekey,
+          theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
+        });
+      }
+    } catch (error) {
+      console.error('Failed to initialize Turnstile:', error);
+    }
+  }
+
+  // 首次加载
+  initTurnstile();
+
+  // View Transitions导航时重新初始化
+  document.addEventListener('astro:page-load', () => {
+    initTurnstile();
+  });
+
+  // 监听主题变化，更新Turnstile主题
+  window.addEventListener('theme-change', () => {
+    if (turnstileWidgetId !== undefined) {
+      // @ts-ignore
+      const response = window.turnstile?.getResponse(turnstileWidgetId);
+      
+      // 只有在未验证状态时才重新渲染（已验证则保留，避免重置用户的验证状态）
+      if (!response) {
+        // @ts-ignore
+        window.turnstile?.remove(turnstileWidgetId);
+        initTurnstile();
+      }
+    }
+  });
+
+  // 页面切换前清理
+  document.addEventListener('astro:before-swap', () => {
+    if (turnstileWidgetId !== undefined) {
+      try {
+        // @ts-ignore
+        window.turnstile?.remove(turnstileWidgetId);
+      } catch (e) {
+        console.log('Turnstile cleanup on page leave');
+      }
+      turnstileWidgetId = undefined;
+    }
+  });
+</script>

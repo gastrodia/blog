@@ -1,5 +1,5 @@
 ---
-import { Icon } from "./Icon";
+import Icon from "./Icon.astro";
 ---
 
 <button
@@ -9,8 +9,8 @@ import { Icon } from "./Icon";
   aria-label="auto"
   aria-live="polite"
 >
-  <Icon name="Moon" className="size-full stroke-2 absolute top-[50%] left-[50%] -translate-[50%] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-  <Icon name="SunHigh" className="size-full stroke-2 absolute top-[50%] left-[50%] -translate-[50%] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
+  <Icon name="Moon" class="size-full stroke-2 absolute top-[50%] left-[50%] -translate-[50%] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
+  <Icon name="SunHigh" class="size-full stroke-2 absolute top-[50%] left-[50%] -translate-[50%] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
 </button>
 
 <script is:inline data-astro-rerun>

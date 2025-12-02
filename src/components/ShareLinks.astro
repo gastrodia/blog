@@ -1,7 +1,7 @@
 ---
 import { SHARE_LINKS } from "@/constants";
 import LinkButton from "./LinkButton.astro";
-import { Icon } from "@/components/Icon";
+import Icon from "@/components/Icon.astro";
 
 const URL = Astro.url;
 ---
@@ -17,7 +17,7 @@ const URL = Astro.url;
             class="scale-90 p-2 hover:rotate-6 sm:p-1"
             title={social.linkTitle}
           >
-            <Icon className="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110" name={social.icon} />
+            <Icon class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110" name={social.icon} />
             <span class="sr-only">{social.linkTitle}</span>
           </LinkButton>
         ))}

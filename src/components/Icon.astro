@@ -1,0 +1,14 @@
+---
+export interface Props {
+  name: string;
+  class?: string | Array<string | Record<string, boolean>>;
+  id?: string;
+}
+
+const { name, class: className, id } = Astro.props;
+---
+
+<svg class:list={className} id={id}>
+  <use xlink:href={`#${name}`} />
+</svg>
+

@@ -1,6 +1,6 @@
 ---
 import LinkButton from "@/components/LinkButton.astro";
-import { Icon } from "@/components/Icon";
+import Icon from "@/components/Icon.astro";
 
 export interface ProjectProps {
   title: string;
@@ -27,7 +27,7 @@ const { title, href, github, desc, tags, wip } = Astro.props;
   <p class="py-2 text-sm flex-1">{desc}</p>
   <div class="flex justify-between text-xs">
     <p class="flex items-center gap-1">
-      <label><Icon name="Tag"  className="size-4"/></label>
+      <label><Icon name="Tag"  class="size-4"/></label>
       <span>{tags}</span>
     </p>
     <LinkButton href={github} class="link-icon link underline" target="_blank">

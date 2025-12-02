@@ -1,12 +1,9 @@
 ---
-import Button from "./Button.tsx"
-import {Icon} from "./Icon"
+import LinkButton from "./LinkButton.astro";
+import Icon from "@/components/Icon.astro";
 ---
 
-
-<Button>
-    <a class="flex gap-1" href="/resume">
-        <Icon name="PDF" className="size-6" />
-      GetResume
-    </a>
-  </Button>
+<LinkButton href="/resume" class="flex gap-1 rounded-md border px-3 py-2">
+  <Icon name="PDF" class="size-6" />
+  <span>GetResume</span>
+</LinkButton>

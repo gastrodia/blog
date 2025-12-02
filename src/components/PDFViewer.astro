@@ -1,0 +1,200 @@
+---
+interface Props {
+  file: string;
+  fileName?: string;
+}
+
+const { file, fileName } = Astro.props;
+---
+
+<div class="relative w-full min-h-[800px] bg-white dark:bg-gray-900">
+  <div 
+    id="pdf-loading" 
+    class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-white dark:bg-gray-900 z-10 opacity-100 transition-opacity duration-300"
+  >
+    <div class="w-12 h-12 border-3 border-gray-200 dark:border-gray-700 border-t-blue-500 dark:border-t-blue-400 rounded-full animate-spin"></div>
+    <p class="text-lg font-medium text-gray-700 dark:text-gray-300">Loading PDF...</p>
+  </div>
+  <div 
+    id="pdf-canvas-container" 
+    class="w-full flex flex-col items-center gap-4 py-4"
+    data-pdf-url={file}
+    data-pdf-name={fileName}
+  ></div>
+</div>
+
+<script>
+  import * as pdfjsLib from 'pdfjs-dist';
+  import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from 'pdfjs-dist';
+
+  const WORKER_SRC = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+  const CONTAINER_PADDING = 32;
+  const DEFAULT_CONTAINER_WIDTH = 800;
+  const LOADING_FADE_DURATION = 300;
+  const RESIZE_DEBOUNCE_DELAY = 300;
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc = WORKER_SRC;
+
+  class PDFViewer {
+    private container: HTMLElement | null = null;
+    private loading: HTMLElement | null = null;
+    private resizeTimeout?: NodeJS.Timeout;
+    private currentRenderTasks: RenderTask[] = [];
+    private isRendering = false;
+
+    constructor() {
+      this.container = document.getElementById('pdf-canvas-container');
+      this.loading = document.getElementById('pdf-loading');
+    }
+
+    async init(): Promise<void> {
+      if (!this.container) return;
+
+      const pdfUrl = this.container.getAttribute('data-pdf-url');
+      if (!pdfUrl) return;
+
+      // Prevent concurrent rendering
+      if (this.isRendering) {
+        console.log('PDF rendering already in progress, skipping...');
+        return;
+      }
+
+      this.isRendering = true;
+
+      try {
+        this.cancelCurrentRenders();
+        this.clearContainer();
+
+        const pdf = await this.loadPDF(pdfUrl);
+        await this.renderAllPages(pdf);
+        this.hideLoading();
+      } catch (error) {
+        this.handleError(error, pdfUrl);
+      } finally {
+        this.isRendering = false;
+      }
+    }
+
+    private async loadPDF(url: string): Promise<PDFDocumentProxy> {
+      const loadingTask = pdfjsLib.getDocument(url);
+      return await loadingTask.promise;
+    }
+
+    private async renderAllPages(pdf: PDFDocumentProxy): Promise<void> {
+      // Render pages sequentially to avoid race conditions
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        await this.renderPage(pdf, pageNum);
+      }
+    }
+
+    private async renderPage(pdf: PDFDocumentProxy, pageNum: number): Promise<void> {
+      if (!this.container) return;
+
+      const page = await pdf.getPage(pageNum);
+      const canvas = this.createCanvas(page);
+      
+      if (!canvas) return;
+
+      const context = canvas.getContext('2d');
+      if (!context) return;
+
+      const viewport = this.calculateViewport(page);
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+
+      const renderTask = page.render({
+        canvasContext: context,
+        viewport: viewport,
+      } as any);
+
+      this.currentRenderTasks.push(renderTask);
+
+      try {
+        await renderTask.promise;
+        this.container.appendChild(canvas);
+      } catch (error) {
+        if ((error as Error).name !== 'RenderingCancelledException') {
+          throw error;
+        }
+      }
+    }
+
+    private createCanvas(_page: PDFPageProxy): HTMLCanvasElement {
+      return document.createElement('canvas');
+    }
+
+    private calculateViewport(page: PDFPageProxy) {
+      const containerWidth = this.container?.clientWidth || DEFAULT_CONTAINER_WIDTH;
+      const baseViewport = page.getViewport({ scale: 1 });
+      const scale = (containerWidth - CONTAINER_PADDING) / baseViewport.width;
+      return page.getViewport({ scale });
+    }
+
+    private clearContainer(): void {
+      if (this.container) {
+        this.container.innerHTML = '';
+      }
+    }
+
+    private cancelCurrentRenders(): void {
+      this.currentRenderTasks.forEach(task => task.cancel());
+      this.currentRenderTasks = [];
+    }
+
+    private hideLoading(): void {
+      if (!this.loading) return;
+
+      this.loading.style.opacity = '0';
+      setTimeout(() => {
+        if (this.loading) {
+          this.loading.style.display = 'none';
+        }
+      }, LOADING_FADE_DURATION);
+    }
+
+    private handleError(error: unknown, pdfUrl: string): void {
+      console.error('Error loading PDF:', error);
+
+      if (this.container) {
+        this.container.innerHTML = `
+          <div class="p-8 text-center">
+            <p class="text-red-500 mb-4">Failed to load PDF</p>
+            <a href="${pdfUrl}" download class="text-blue-500 underline hover:text-blue-600">
+              Download PDF
+            </a>
+          </div>
+        `;
+      }
+
+      if (this.loading) {
+        this.loading.style.display = 'none';
+      }
+    }
+
+    handleResize = (): void => {
+      clearTimeout(this.resizeTimeout);
+      this.resizeTimeout = setTimeout(() => this.init(), RESIZE_DEBOUNCE_DELAY);
+    };
+  }
+
+  // Initialize PDF viewer (singleton pattern)
+  let viewer: PDFViewer | null = null;
+  let isResizeListenerSetup = false;
+
+  function initViewer() {
+    // Recreate viewer instance to get fresh DOM references
+    viewer = new PDFViewer();
+    viewer.init();
+
+    // Setup resize listener only once globally
+    if (!isResizeListenerSetup && viewer) {
+      window.addEventListener('resize', viewer.handleResize);
+      isResizeListenerSetup = true;
+    }
+  }
+
+  // Handle Astro page transitions
+  document.addEventListener('astro:page-load', initViewer);
+</script>
+
+

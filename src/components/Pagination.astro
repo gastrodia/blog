@@ -1,7 +1,7 @@
 ---
 import type { Page } from "astro";
 import type { CollectionEntry } from "astro:content";
-import { Icon } from "./Icon";
+import Icon from "./Icon.astro";
 import LinkButton from "./LinkButton.astro";
 
 export interface Props {
@@ -20,7 +20,7 @@ const { page } = Astro.props;
         class:list={["me-4 select-none", { "opacity-50": !page.url.prev }]}
         ariaLabel="Previous"
       >
-        <Icon name="ArrowLeft" className="size-4 stroke-2 inline-block rtl:rotate-180" />
+        <Icon name="ArrowLeft" class="size-4 stroke-2 inline-block rtl:rotate-180" />
         Prev
       </LinkButton>
       {page.currentPage} / {page.lastPage}
@@ -31,7 +31,7 @@ const { page } = Astro.props;
         ariaLabel="Next"
       >
         Next
-        <Icon name="ArrowRight" className="size-4 stroke-2 inline-block rtl:rotate-180" />
+        <Icon name="ArrowRight" class="size-4 stroke-2 inline-block rtl:rotate-180" />
       </LinkButton>
     </nav>
   )

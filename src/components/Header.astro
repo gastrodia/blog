@@ -3,7 +3,7 @@ import Hr from "./Hr.astro";
 import LinkButton from "./LinkButton.astro";
 import { SITE } from "@/config";
 import ThemeToggle from "./ThemeToggle.astro";
-import { Icon } from "./Icon";
+import Icon from "./Icon.astro";
 
 const { pathname } = Astro.url;
 
@@ -48,7 +48,7 @@ const isActive = (path: string) => {
           aria-label="rss feed"
           title="RSS Feed"
         >
-          <Icon name="Rss" className="size-4 stroke-2 text-accent" />
+          <Icon name="Rss" class="size-4 stroke-2 text-accent" />
         </a>
       <nav
         id="nav-menu"
@@ -61,8 +61,8 @@ const isActive = (path: string) => {
           aria-expanded="false"
           aria-controls="menu-items"
         >
-          <Icon name="X" id="close-icon" className="hidden size-6" />
-          <Icon name="MenuDeep" id="menu-icon" className="size-6" />
+          <Icon name="X" id="close-icon" class="hidden size-6" />
+          <Icon name="MenuDeep" id="menu-icon" class="size-6" />
         </button>
         <ul
           id="menu-items"
@@ -97,7 +97,7 @@ const isActive = (path: string) => {
                   ariaLabel="archives"
                   title="Archives"
                 >
-                  <Icon name="Archive" className="hidden sm:inline-block size-6 stroke-2" />
+                  <Icon name="Archive" class="hidden sm:inline-block size-6 stroke-2" />
                   <span class="sm:sr-only">Archives</span>
                 </LinkButton>
               </li>
@@ -113,7 +113,7 @@ const isActive = (path: string) => {
               ariaLabel="search"
               title="Search"
             >
-              <Icon name="Search" className="size-6 stroke-2" />
+              <Icon name="Search" class="size-6 stroke-2" />
               <span class="sr-only">Search</span>
             </LinkButton>
           </li>

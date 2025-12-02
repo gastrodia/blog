@@ -14,7 +14,6 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@astrojs/react": "^4.4.2",
     "@astrojs/rss": "^4.0.12",
     "@astrojs/sitemap": "^3.4.1",
     "@resvg/resvg-js": "^2.6.2",
@@ -23,7 +22,7 @@
     "dayjs": "^1.11.13",
     "lodash.kebabcase": "^4.1.1",
     "nodemailer": "^7.0.11",
-    "react-pdf": "^10.2.0",
+    "pdfjs-dist": "^5.4.449",
     "remark-collapse": "^0.1.2",
     "remark-toc": "^9.0.0",
     "satori": "^0.15.2",
@@ -38,6 +37,7 @@
     "@tailwindcss/typography": "^0.5.16",
     "@types/lodash.kebabcase": "^4.1.9",
     "@types/nodemailer": "^7.0.4",
+    "@types/pdfjs-dist": "^2.10.378",
     "@typescript-eslint/parser": "^8.36.0",
     "cpy-cli": "^6.0.0",
     "eslint": "^9.30.1",

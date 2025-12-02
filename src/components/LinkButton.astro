@@ -7,6 +7,8 @@ export interface Props {
   title?: string;
   disabled?: boolean;
   target?: string;
+  download?: string;
+  dataAstroReload?: boolean;
 }
 
 const {
@@ -17,6 +19,7 @@ const {
   title,
   disabled = false,
   target = "",
+  download = "",
 } = Astro.props;
 ---
 
@@ -34,10 +37,11 @@ const {
     <a
       id={id}
       {href}
-      class:list={["group inline-block hover:text-accent", className]}
+      class:list={["group hover:text-accent", className]}
       aria-label={ariaLabel}
       {title}
       {target}
+      download={download ? download : void 0}
     >
       <slot />
     </a>

@@ -1,7 +1,7 @@
 ---
 import { SKILLS, EDUCATION, PROFILE } from "@/constants";
 import GetResume from "@/components/GetResume.astro";
-import { Icon } from "./Icon";
+import Icon from "./Icon.astro";
 ---
 
 <section id="about-me" class="scroll-mt-16">
@@ -27,7 +27,7 @@ import { Icon } from "./Icon";
           const Logo = skill.logo;
           return (
             <li class="flex items-center gap-2">
-              <Icon className="size-6" name={Logo} />
+              <Icon class="size-6" name={Logo} />
               <span>{skill.name}</span>
             </li>
           );

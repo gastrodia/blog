@@ -1,6 +1,6 @@
 ---
 import type { CollectionEntry } from "astro:content";
-import { Icon } from "./Icon";
+import Icon from "./Icon.astro";
 import { SITE } from "@/config";
 
 export interface Props {
@@ -27,7 +27,7 @@ const showEditPost =
         className,
       ]}
     >
-      <Icon name="Edit" className="size-6 stroke-1 inline-block" />
+      <Icon name="Edit" class="size-6 stroke-1 inline-block" />
       <span>{SITE.editPost.text}</span>
     </a>
   )

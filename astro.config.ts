@@ -10,7 +10,6 @@ import {
 } from "@shikijs/transformers";
 import { transformerFileName } from "./src/utils/transformers/fileName";
 import { SITE } from "./src/config";
-import react from "@astrojs/react";
 import svgr from "vite-plugin-svgr";
 import vercel from '@astrojs/vercel';
 
@@ -21,7 +20,6 @@ export default defineConfig({
     sitemap({
       filter: page => SITE.showArchives || !page.endsWith("/archives"),
     }),
-    react(),
   ],
   markdown: {
     remarkPlugins: [remarkToc, [remarkCollapse, { test: "Table of contents" }]],
@@ -46,7 +44,7 @@ export default defineConfig({
     plugins: [tailwindcss(), svgr()],
     optimizeDeps: {
       exclude: ["@resvg/resvg-js"],
-    },
+    }
   },
   image: {
     responsiveStyles: true,
@@ -64,5 +62,5 @@ export default defineConfig({
   experimental: {
     preserveScriptOrder: true,
   },
-  adapter: vercel(),
+  adapter: vercel()
 });
