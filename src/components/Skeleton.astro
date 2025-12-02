@@ -1,0 +1,83 @@
+---
+// Skeleton loading component for PDF viewer
+---
+
+<div class="w-full space-y-4 animate__animated animate__fadeIn">
+  <!-- PDF Page Skeleton 1 -->
+  <div class="bg-white dark:bg-gray-800 rounded-sm shadow-sm overflow-hidden">
+    <div class="aspect-[8.5/11] w-full p-8 space-y-4 animate-pulse">
+      <!-- Header line -->
+      <div class="h-6 bg-gray-300 dark:bg-gray-600 rounded w-3/4"></div>
+      
+      <!-- Content lines -->
+      <div class="space-y-3 pt-4">
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-11/12"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-10/12"></div>
+      </div>
+
+      <!-- Content blocks -->
+      <div class="space-y-3 pt-6">
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-9/12"></div>
+      </div>
+
+      <div class="space-y-3 pt-6">
+        <div class="h-5 bg-gray-300 dark:bg-gray-600 rounded w-2/3"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-11/12"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-10/12"></div>
+      </div>
+
+      <div class="space-y-3 pt-6">
+        <div class="h-5 bg-gray-300 dark:bg-gray-600 rounded w-1/2"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-9/12"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PDF Page Skeleton 2 -->
+  <div class="bg-white dark:bg-gray-800 rounded-sm shadow-sm overflow-hidden animate__animated animate__fadeIn animate__delay-1s">
+    <div class="aspect-[8.5/11] w-full p-8 space-y-4 animate-pulse">
+      <!-- Header line -->
+      <div class="h-6 bg-gray-300 dark:bg-gray-600 rounded w-2/3"></div>
+      
+      <!-- Content lines -->
+      <div class="space-y-3 pt-4">
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-10/12"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-11/12"></div>
+      </div>
+
+      <!-- Content blocks -->
+      <div class="space-y-3 pt-6">
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-8/12"></div>
+      </div>
+
+      <div class="space-y-3 pt-6">
+        <div class="h-5 bg-gray-300 dark:bg-gray-600 rounded w-3/5"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-10/12"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading indicator -->
+  <div class="flex justify-center items-center py-4 animate__animated animate__fadeIn animate__delay-2s">
+    <div class="flex space-x-2">
+      <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
+      <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
+      <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
+    </div>
+  </div>
+</div>
+

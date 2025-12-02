@@ -7,30 +7,26 @@ interface Props {
 const { file, fileName } = Astro.props;
 ---
 
-<div class="relative w-full min-h-[800px] bg-white dark:bg-gray-900">
-  <div 
-    id="pdf-loading" 
-    class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-white dark:bg-gray-900 z-10 opacity-100 transition-opacity duration-300"
-  >
-    <div class="w-12 h-12 border-3 border-gray-200 dark:border-gray-700 border-t-blue-500 dark:border-t-blue-400 rounded-full animate-spin"></div>
-    <p class="text-lg font-medium text-gray-700 dark:text-gray-300">Loading PDF...</p>
+<div class="relative w-full">
+  <div id="pdf-loading">
+    <slot name="fallback"></slot>
   </div>
-  <div 
-    id="pdf-canvas-container" 
-    class="w-full flex flex-col items-center gap-4 py-4"
+  <div
+    id="pdf-canvas-container"
+    class="w-full"
     data-pdf-url={file}
     data-pdf-name={fileName}
-  ></div>
+  >
+  </div>
 </div>
 
 <script>
-  import * as pdfjsLib from 'pdfjs-dist';
-  import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from 'pdfjs-dist';
+  import * as pdfjsLib from "pdfjs-dist";
+  import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from "pdfjs-dist";
 
   const WORKER_SRC = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-  const CONTAINER_PADDING = 32;
+  const CONTAINER_PADDING = 0;
   const DEFAULT_CONTAINER_WIDTH = 800;
-  const LOADING_FADE_DURATION = 300;
   const RESIZE_DEBOUNCE_DELAY = 300;
 
   pdfjsLib.GlobalWorkerOptions.workerSrc = WORKER_SRC;
@@ -43,19 +39,19 @@ const { file, fileName } = Astro.props;
     private isRendering = false;
 
     constructor() {
-      this.container = document.getElementById('pdf-canvas-container');
-      this.loading = document.getElementById('pdf-loading');
+      this.container = document.getElementById("pdf-canvas-container");
+      this.loading = document.getElementById("pdf-loading");
     }
 
     async init(): Promise<void> {
       if (!this.container) return;
 
-      const pdfUrl = this.container.getAttribute('data-pdf-url');
+      const pdfUrl = this.container.getAttribute("data-pdf-url");
       if (!pdfUrl) return;
 
       // Prevent concurrent rendering
       if (this.isRendering) {
-        console.log('PDF rendering already in progress, skipping...');
+        console.log("PDF rendering already in progress, skipping...");
         return;
       }
 
@@ -87,15 +83,18 @@ const { file, fileName } = Astro.props;
       }
     }
 
-    private async renderPage(pdf: PDFDocumentProxy, pageNum: number): Promise<void> {
+    private async renderPage(
+      pdf: PDFDocumentProxy,
+      pageNum: number
+    ): Promise<void> {
       if (!this.container) return;
 
       const page = await pdf.getPage(pageNum);
       const canvas = this.createCanvas(page);
-      
+
       if (!canvas) return;
 
-      const context = canvas.getContext('2d');
+      const context = canvas.getContext("2d");
       if (!context) return;
 
       const viewport = this.calculateViewport(page);
@@ -113,18 +112,19 @@ const { file, fileName } = Astro.props;
         await renderTask.promise;
         this.container.appendChild(canvas);
       } catch (error) {
-        if ((error as Error).name !== 'RenderingCancelledException') {
+        if ((error as Error).name !== "RenderingCancelledException") {
           throw error;
         }
       }
     }
 
     private createCanvas(_page: PDFPageProxy): HTMLCanvasElement {
-      return document.createElement('canvas');
+      return document.createElement("canvas");
     }
 
     private calculateViewport(page: PDFPageProxy) {
-      const containerWidth = this.container?.clientWidth || DEFAULT_CONTAINER_WIDTH;
+      const containerWidth =
+        this.container?.clientWidth || DEFAULT_CONTAINER_WIDTH;
       const baseViewport = page.getViewport({ scale: 1 });
       const scale = (containerWidth - CONTAINER_PADDING) / baseViewport.width;
       return page.getViewport({ scale });
@@ -132,7 +132,7 @@ const { file, fileName } = Astro.props;
 
     private clearContainer(): void {
       if (this.container) {
-        this.container.innerHTML = '';
+        this.container.innerHTML = "";
       }
     }
 
@@ -144,16 +144,13 @@ const { file, fileName } = Astro.props;
     private hideLoading(): void {
       if (!this.loading) return;
 
-      this.loading.style.opacity = '0';
-      setTimeout(() => {
-        if (this.loading) {
-          this.loading.style.display = 'none';
-        }
-      }, LOADING_FADE_DURATION);
+      if (this.loading && this.loading.parentNode) {
+        this.loading.parentNode.removeChild(this.loading);
+      }
     }
 
     private handleError(error: unknown, pdfUrl: string): void {
-      console.error('Error loading PDF:', error);
+      console.error("Error loading PDF:", error);
 
       if (this.container) {
         this.container.innerHTML = `
@@ -167,7 +164,7 @@ const { file, fileName } = Astro.props;
       }
 
       if (this.loading) {
-        this.loading.style.display = 'none';
+        this.loading.style.display = "none";
       }
     }
 
@@ -188,13 +185,11 @@ const { file, fileName } = Astro.props;
 
     // Setup resize listener only once globally
     if (!isResizeListenerSetup && viewer) {
-      window.addEventListener('resize', viewer.handleResize);
+      window.addEventListener("resize", viewer.handleResize);
       isResizeListenerSetup = true;
     }
   }
 
   // Handle Astro page transitions
-  document.addEventListener('astro:page-load', initViewer);
+  document.addEventListener("astro:page-load", initViewer);
 </script>
-
-

@@ -13,25 +13,24 @@ import Icon from "./Icon.astro";
   <Icon name="SunHigh" class="size-full stroke-2 absolute top-[50%] left-[50%] -translate-[50%] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
 </button>
 
-<script is:inline data-astro-rerun>
-  function setupThemeToggle() {
-    const themeBtn = document.getElementById("theme-btn");
+<script is:inline>
+  // 使用事件委托，只需绑定一次
+  // 防止重复绑定的标记
+  if (!window.__themeToggleInitialized) {
+    window.__themeToggleInitialized = true;
     
-    if (!themeBtn) return;
-
-    themeBtn.addEventListener("click", () => {
-      const currentTheme = document.documentElement.getAttribute("data-theme");
-      const newTheme = currentTheme === "dark" ? "light" : "dark";
+    document.addEventListener("click", (e) => {
+      // 检查点击的是否是主题切换按钮或其子元素
+      const themeBtn = e.target.closest("#theme-btn");
       
-      document.documentElement.setAttribute("data-theme", newTheme);
-      localStorage.setItem("theme", newTheme);
+      if (themeBtn) {
+        const currentTheme = document.documentElement.getAttribute("data-theme");
+        const newTheme = currentTheme === "dark" ? "light" : "dark";
+        
+        document.documentElement.setAttribute("data-theme", newTheme);
+        localStorage.setItem("theme", newTheme);
+      }
     });
   }
-
-  // 首次加载时初始化
-  setupThemeToggle();
-
-  // View Transitions 页面切换后重新初始化
-  document.addEventListener("astro:after-swap", setupThemeToggle);
 </script>
 

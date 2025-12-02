@@ -6,12 +6,13 @@ import PDFViewer from "@/components/PDFViewer.astro";
 import { PROFILE } from "@/constants";
 import LinkButton from "@/components/LinkButton.astro";
 import Icon from "@/components/Icon.astro";
+import Skeleton from "@/components/Skeleton.astro";
 
 const { resumeName, resume } = PROFILE;
 ---
 
 <Layout>
-  <div transition:persist={false}>
+  <div>
     <HomeHeader />
     <main class="pt-14">
       <section class="space-y-2 py-4">
@@ -26,7 +27,9 @@ const { resumeName, resume } = PROFILE;
           </LinkButton>
         </div>
         <div class="relative min-h-[800px] border">
-          <PDFViewer file={resume} fileName={resumeName} />
+          <PDFViewer file={resume} fileName={resumeName}>
+            <Skeleton slot="fallback" />
+          </PDFViewer>
         </div>
       </section>
     </main>
