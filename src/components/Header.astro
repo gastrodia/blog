@@ -33,15 +33,15 @@ const isActive = (path: string) => {
   >
     <div
       id="top-nav-wrap"
-      class="relative flex gap-2 w-full items-baseline justify-between bg-background p-4 sm:items-center sm:py-6"
+      class="relative w-full items-baseline justify-between bg-background p-4 sm:items-center sm:py-6"
     >
-      <a
-        href="/"
-        class="absolute py-1 text-xl leading-8 font-semibold whitespace-nowrap sm:static sm:my-auto sm:text-2xl sm:leading-none"
+      <div
+        class="absolute flex items-center gap-2 py-2 sm:py-0"
       >
-        {SITE.title}
-      </a>
-      <a
+        <a href="/" class="font-semibold whitespace-nowrap text-xl sm:text-2xl">
+          {SITE.title}
+        </a>
+        <a
           target="_blank"
           href="/rss.xml"
           class="rss-link"
@@ -50,6 +50,8 @@ const isActive = (path: string) => {
         >
           <Icon name="Rss" class="size-4 stroke-2 text-accent" />
         </a>
+      </div>
+
       <nav
         id="nav-menu"
         class="flex w-full flex-col items-center sm:flex-row sm:justify-end sm:space-x-4 sm:py-0"
@@ -97,7 +99,10 @@ const isActive = (path: string) => {
                   ariaLabel="archives"
                   title="Archives"
                 >
-                  <Icon name="Archive" class="hidden sm:inline-block size-6 stroke-2" />
+                  <Icon
+                    name="Archive"
+                    class="hidden size-6 stroke-2 sm:inline-block"
+                  />
                   <span class="sm:sr-only">Archives</span>
                 </LinkButton>
               </li>
