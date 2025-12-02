@@ -36,6 +36,14 @@ const TURNSTILE_SITE_KEY = import.meta.env.TURNSTILE_SITE_KEY;
     />
   </div>
   <div id="turnstile-container" class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY}></div>
+  <!-- 隐藏的验证字段，利用原生 required 属性阻止未验证的提交 -->
+  <input
+    type="hidden"
+    id="turnstile-verify"
+    name="cf-turnstile-response"
+    required
+    data-error-message="Please complete the verification"
+  />
   <input
     type="submit"
     class="border w-full border-skin-fill 
@@ -90,8 +98,12 @@ const TURNSTILE_SITE_KEY = import.meta.env.TURNSTILE_SITE_KEY;
         }
       }
 
-      // 清空容器
+      // 清空容器和隐藏字段，确保需要重新验证
       container.innerHTML = '';
+      const hiddenInput = document.getElementById('turnstile-verify') as HTMLInputElement;
+      if (hiddenInput) {
+        hiddenInput.value = '';
+      }
       
       // 重新渲染 Turnstile
       const sitekey = container.getAttribute('data-sitekey');
@@ -99,6 +111,27 @@ const TURNSTILE_SITE_KEY = import.meta.env.TURNSTILE_SITE_KEY;
         turnstileWidgetId = turnstile.render('#turnstile-container', {
           sitekey: sitekey,
           theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
+          callback: function(token: string) {
+            // 验证成功后，填充隐藏字段的值，满足 required 验证
+            const hiddenInput = document.getElementById('turnstile-verify') as HTMLInputElement;
+            if (hiddenInput) {
+              hiddenInput.value = token;
+            }
+          },
+          'expired-callback': function() {
+            // 验证过期后，清空隐藏字段，阻止表单提交
+            const hiddenInput = document.getElementById('turnstile-verify') as HTMLInputElement;
+            if (hiddenInput) {
+              hiddenInput.value = '';
+            }
+          },
+          'error-callback': function() {
+            // 验证错误后，清空隐藏字段，阻止表单提交
+            const hiddenInput = document.getElementById('turnstile-verify') as HTMLInputElement;
+            if (hiddenInput) {
+              hiddenInput.value = '';
+            }
+          }
         });
       }
     } catch (error) {
@@ -106,12 +139,31 @@ const TURNSTILE_SITE_KEY = import.meta.env.TURNSTILE_SITE_KEY;
     }
   }
 
+  // 表单提交验证：检查 Turnstile 是否完成
+  function setupFormValidation() {
+    const form = document.getElementById('contact-form') as HTMLFormElement;
+    const hiddenInput = document.getElementById('turnstile-verify') as HTMLInputElement;
+    
+    if (form && hiddenInput) {
+      form.addEventListener('submit', (e) => {
+        if (!hiddenInput.value) {
+          e.preventDefault();
+          // alert('Please complete the security verification before submitting.');
+          // 聚焦到 Turnstile 容器
+          document.getElementById('turnstile-container')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+    }
+  }
+
   // 首次加载
   initTurnstile();
+  setupFormValidation();
 
   // View Transitions导航时重新初始化
   document.addEventListener('astro:page-load', () => {
     initTurnstile();
+    setupFormValidation();
   });
 
   // 监听主题变化，更新Turnstile主题
