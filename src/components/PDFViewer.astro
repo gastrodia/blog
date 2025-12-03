@@ -98,8 +98,20 @@ const { file, fileName } = Astro.props;
       if (!context) return;
 
       const viewport = this.calculateViewport(page);
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
+      
+      // 获取设备像素比，用于高清屏幕渲染
+      const pixelRatio = window.devicePixelRatio || 1;
+      
+      // 设置canvas的实际像素尺寸（考虑设备像素比）
+      canvas.width = Math.floor(viewport.width * pixelRatio);
+      canvas.height = Math.floor(viewport.height * pixelRatio);
+      
+      // 设置canvas的CSS显示尺寸
+      canvas.style.width = `${viewport.width}px`;
+      canvas.style.height = `${viewport.height}px`;
+      
+      // 缩放context以匹配设备像素比
+      context.scale(pixelRatio, pixelRatio);
 
       const renderTask = page.render({
         canvasContext: context,
