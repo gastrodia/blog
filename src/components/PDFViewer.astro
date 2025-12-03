@@ -34,17 +34,20 @@ const { file, fileName } = Astro.props;
   class PDFViewer {
     private container: HTMLElement | null = null;
     private loading: HTMLElement | null = null;
-    private resizeTimeout?: NodeJS.Timeout;
+    private resizeTimeout?: ReturnType<typeof setTimeout>;
     private currentRenderTasks: RenderTask[] = [];
     private isRendering = false;
+    private lastWidth = 0; // 记录上次宽度，用于判断是否真正需要重新渲染
+    private cachedPdf: PDFDocumentProxy | null = null; // 缓存 PDF 文档避免重复加载
+    private currentPdfUrl: string | null = null; // 记录当前 PDF URL，用于检测是否需要重新加载
 
     constructor() {
       this.container = document.getElementById("pdf-canvas-container");
       this.loading = document.getElementById("pdf-loading");
+      this.lastWidth = window.innerWidth;
     }
 
     async init(): Promise<void> {
-      alert(2)
       if (!this.container) return;
 
       const pdfUrl = this.container.getAttribute("data-pdf-url");
@@ -52,7 +55,6 @@ const { file, fileName } = Astro.props;
 
       // Prevent concurrent rendering
       if (this.isRendering) {
-        console.log("PDF rendering already in progress, skipping...");
         return;
       }
 
@@ -60,16 +62,50 @@ const { file, fileName } = Astro.props;
 
       try {
         this.cancelCurrentRenders();
-        this.clearContainer();
 
-        const pdf = await this.loadPDF(pdfUrl);
-        await this.renderAllPages(pdf);
+        // 检测 PDF URL 是否改变（页面切换场景）
+        const isPdfChanged = this.currentPdfUrl !== pdfUrl;
+        if (isPdfChanged && this.cachedPdf) {
+          // 释放旧的 PDF 资源
+          this.cachedPdf.destroy();
+          this.cachedPdf = null;
+        }
+        this.currentPdfUrl = pdfUrl;
+
+        // 首次加载或 PDF 改变时才清空容器，resize 时使用双缓冲
+        const isFirstLoad = !this.cachedPdf;
+        if (isFirstLoad) {
+          this.clearContainer();
+        }
+
+        const pdf = this.cachedPdf || await this.loadPDF(pdfUrl);
+        this.cachedPdf = pdf;
+
+        if (isFirstLoad) {
+          // 首次加载直接渲染到容器
+          await this.renderAllPages(pdf);
+        } else {
+          // resize 时使用双缓冲：先渲染到临时容器，完成后再替换
+          await this.renderAllPagesWithDoubleBuffer(pdf);
+        }
+        
         this.hideLoading();
       } catch (error) {
         this.handleError(error, pdfUrl);
       } finally {
         this.isRendering = false;
       }
+    }
+
+    // 清理资源，用于页面切换前
+    destroy(): void {
+      this.cancelCurrentRenders();
+      clearTimeout(this.resizeTimeout);
+      if (this.cachedPdf) {
+        this.cachedPdf.destroy();
+        this.cachedPdf = null;
+      }
+      this.currentPdfUrl = null;
     }
 
     private async loadPDF(url: string): Promise<PDFDocumentProxy> {
@@ -80,13 +116,36 @@ const { file, fileName } = Astro.props;
     private async renderAllPages(pdf: PDFDocumentProxy): Promise<void> {
       // Render pages sequentially to avoid race conditions
       for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-        await this.renderPage(pdf, pageNum);
+        await this.renderPage(pdf, pageNum, this.container!);
       }
+    }
+
+    // 双缓冲渲染：先渲染到 DocumentFragment，完成后一次性替换
+    private async renderAllPagesWithDoubleBuffer(pdf: PDFDocumentProxy): Promise<void> {
+      const fragment = document.createDocumentFragment();
+      const tempContainer = document.createElement("div");
+      
+      // 临时容器需要有宽度才能正确计算 viewport
+      tempContainer.style.width = `${this.container?.clientWidth || DEFAULT_CONTAINER_WIDTH}px`;
+      
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        await this.renderPage(pdf, pageNum, tempContainer);
+      }
+      
+      // 将渲染好的 canvas 移动到 fragment
+      while (tempContainer.firstChild) {
+        fragment.appendChild(tempContainer.firstChild);
+      }
+      
+      // 一次性替换：先清空再添加，最小化 DOM 操作
+      this.clearContainer();
+      this.container?.appendChild(fragment);
     }
 
     private async renderPage(
       pdf: PDFDocumentProxy,
-      pageNum: number
+      pageNum: number,
+      targetContainer: HTMLElement | DocumentFragment
     ): Promise<void> {
       if (!this.container) return;
 
@@ -123,7 +182,7 @@ const { file, fileName } = Astro.props;
 
       try {
         await renderTask.promise;
-        this.container.appendChild(canvas);
+        targetContainer.appendChild(canvas);
       } catch (error) {
         if ((error as Error).name !== "RenderingCancelledException") {
           throw error;
@@ -144,7 +203,6 @@ const { file, fileName } = Astro.props;
     }
 
     private clearContainer(): void {
-      alert(3)
       if (this.container) {
         this.container.innerHTML = "";
       }
@@ -183,26 +241,37 @@ const { file, fileName } = Astro.props;
     }
 
     handleResize = (): void => {
-      alert(1)
+      // 只在宽度真正变化时才重新渲染（避免移动端滚动时地址栏隐藏/虚拟键盘触发的resize）
+      const currentWidth = window.innerWidth;
+      if (currentWidth === this.lastWidth) return;
+      
+      this.lastWidth = currentWidth;
       clearTimeout(this.resizeTimeout);
       this.resizeTimeout = setTimeout(() => this.init(), RESIZE_DEBOUNCE_DELAY);
     };
+
   }
 
   // Initialize PDF viewer (singleton pattern)
   let viewer: PDFViewer | null = null;
-  let isResizeListenerSetup = false;
+  let currentResizeHandler: (() => void) | null = null;
 
   function initViewer() {
-    // Recreate viewer instance to get fresh DOM references
+    // 清理旧的 viewer 和事件监听器
+    if (viewer) {
+      viewer.destroy();
+    }
+    if (currentResizeHandler) {
+      window.removeEventListener("resize", currentResizeHandler);
+    }
+
+    // 创建新的 viewer 实例
     viewer = new PDFViewer();
     viewer.init();
 
-    // Setup resize listener only once globally
-    if (!isResizeListenerSetup && viewer) {
-      window.addEventListener("resize", viewer.handleResize);
-      isResizeListenerSetup = true;
-    }
+    // 更新 resize 监听器指向新的 viewer
+    currentResizeHandler = viewer.handleResize;
+    window.addEventListener("resize", currentResizeHandler);
   }
 
   // Handle Astro page transitions
