@@ -44,6 +44,7 @@ const { file, fileName } = Astro.props;
     }
 
     async init(): Promise<void> {
+      alert(2)
       if (!this.container) return;
 
       const pdfUrl = this.container.getAttribute("data-pdf-url");
@@ -181,6 +182,7 @@ const { file, fileName } = Astro.props;
     }
 
     handleResize = (): void => {
+      alert(1)
       clearTimeout(this.resizeTimeout);
       this.resizeTimeout = setTimeout(() => this.init(), RESIZE_DEBOUNCE_DELAY);
     };
