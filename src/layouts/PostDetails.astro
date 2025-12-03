@@ -299,28 +299,34 @@ const nextPost =
   });
 </script>
 
-<script is:inline src="/big-picture.js"></script>
+<script is:inline src="/big-picture.js" data-astro-rerun></script>
 <script is:inline>
-  function initImageGallery() {
-    const images = Array.from(document.querySelectorAll("main img"));
-    const gallery = images.map(img => ({ src: img.src }));
+  let galleryController;
 
-    for (let i = 0; i < images.length; i++) {
-      const img = images[i];
-      img.addEventListener("click", () => {
-        BigPicture({
-          el: img,
-          position: i,
-          gallery,
-        });
+  function initImageGallery() {
+    // 移除旧的监听器
+    galleryController?.abort();
+    galleryController = new AbortController();
+
+    // 使用事件委托
+    document.querySelector("main")?.addEventListener("click", (e) => {
+      const img = e.target.closest("img");
+      if (!img) return;
+
+      const images = Array.from(document.querySelectorAll("main img"));
+      const index = images.indexOf(img);
+      if (index === -1) return;
+
+      const gallery = images.map(img => ({ src: img.src }));
+      
+      BigPicture({
+        el: img,
+        position: index,
+        gallery,
       });
-    }
+    }, { signal: galleryController.signal });
   }
 
-  // 首次加载时初始化
-  window.addEventListener("load", initImageGallery);
-
-  // View Transitions 页面切换后重新初始化
-  document.addEventListener("astro:after-swap", initImageGallery);
+  document.addEventListener("astro:page-load", initImageGallery);
 </script>
 
