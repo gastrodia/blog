@@ -284,10 +284,19 @@ const nextPost =
   }
   attachCopyButtons();
 
-  /* Go to page start after page swap */
-  document.addEventListener("astro:after-swap", () =>
-    window.scrollTo({ left: 0, top: 0, behavior: "instant" })
-  );
+  /* Go to page start after page swap (only for forward navigation, and not when restoring scroll) */
+  document.addEventListener("astro:before-swap", (e) => {
+    // 保存导航方向到 sessionStorage，供 after-swap 使用
+    sessionStorage.setItem("nav-direction", e.direction);
+  });
+  document.addEventListener("astro:after-swap", () => {
+    const direction = sessionStorage.getItem("nav-direction");
+    const shouldRestore = sessionStorage.getItem("restoreScroll");
+    // 只在前进导航且非恢复滚动时滚动到顶部
+    if (direction === "forward" && shouldRestore !== "true") {
+      window.scrollTo({ left: 0, top: 0, behavior: "instant" });
+    }
+  });
 </script>
 
 <script is:inline src="/big-picture.js"></script>

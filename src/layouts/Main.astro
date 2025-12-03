@@ -49,6 +49,30 @@ const backUrl = SITE.showBackButton ? Astro.url.pathname : "/";
     const backUrl = mainContent?.dataset?.backurl;
     if (backUrl) {
       sessionStorage.setItem("backUrl", backUrl);
+      
+      // 检查是否需要恢复滚动位置（从详情页返回时）
+      const shouldRestore = sessionStorage.getItem("restoreScroll");
+      const savedUrl = sessionStorage.getItem("scrollUrl");
+      const savedPos = sessionStorage.getItem("scrollPos");
+      
+      if (shouldRestore === "true" && savedUrl === backUrl && savedPos) {
+        // 使用 requestAnimationFrame 确保 DOM 渲染完成
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: parseInt(savedPos, 10), behavior: "instant" });
+        });
+        sessionStorage.removeItem("restoreScroll");
+      }
+    }
+  });
+
+  // 在离开页面前保存滚动位置
+  document.addEventListener("astro:before-swap", () => {
+    const mainContent: HTMLElement | null =
+      document.querySelector("#main-content");
+    const backUrl = mainContent?.dataset?.backurl;
+    if (backUrl) {
+      sessionStorage.setItem("scrollUrl", backUrl);
+      sessionStorage.setItem("scrollPos", String(window.scrollY));
     }
   });
 </script>

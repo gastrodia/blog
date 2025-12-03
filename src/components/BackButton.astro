@@ -20,18 +20,28 @@ import { SITE } from "@/config";
 }
 
 <script>
-  /* Update Search Praam */
-  function updateGoBackUrl() {
+  /* Handle Go Back button click */
+  function setupBackButton() {
     const backButton: HTMLAnchorElement | null =
       document.querySelector("#back-button");
 
+    if (!backButton) return;
+
     const backUrl = sessionStorage.getItem("backUrl");
 
-    if (backUrl && backButton) {
+    // 更新 href
+    if (backUrl) {
       backButton.href = backUrl;
     }
+
+    // 拦截点击事件，标记需要恢复滚动位置
+    backButton.addEventListener("click", () => {
+      // 设置标记，让列表页恢复滚动位置
+      sessionStorage.setItem("restoreScroll", "true");
+      // 让默认的链接导航行为生效
+    });
   }
 
-  document.addEventListener("astro:page-load", updateGoBackUrl);
-  updateGoBackUrl();
+  document.addEventListener("astro:page-load", setupBackButton);
+  setupBackButton();
 </script>

@@ -156,10 +156,6 @@ const TURNSTILE_SITE_KEY = import.meta.env.TURNSTILE_SITE_KEY;
     }
   }
 
-  // 首次加载
-  initTurnstile();
-  setupFormValidation();
-
   // View Transitions导航时重新初始化
   document.addEventListener('astro:page-load', () => {
     initTurnstile();
