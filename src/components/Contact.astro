@@ -35,15 +35,15 @@ const TURNSTILE_SITE_KEY = import.meta.env.TURNSTILE_SITE_KEY;
       focus:border-skin-accent focus:outline-none"
     />
   </div>
-  <div id="turnstile-container" class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY}></div>
+  <!-- <div id="turnstile-container"  data-sitekey={TURNSTILE_SITE_KEY}></div>
   <!-- 隐藏的验证字段，利用原生 required 属性阻止未验证的提交 -->
-  <input
+  <!-- <input
     type="hidden"
     id="turnstile-verify"
     name="cf-turnstile-response"
     required
     data-error-message="Please complete the verification"
-  />
+  /> -->
   <input
     type="submit"
     class="border w-full border-skin-fill 
@@ -51,7 +51,7 @@ const TURNSTILE_SITE_KEY = import.meta.env.TURNSTILE_SITE_KEY;
     value="SEND"
   />
 </form>
-
+<!-- 
 <script>
   let turnstileWidgetId: string | undefined;
 
@@ -194,3 +194,4 @@ const TURNSTILE_SITE_KEY = import.meta.env.TURNSTILE_SITE_KEY;
     }
   });
 </script>
+ -->

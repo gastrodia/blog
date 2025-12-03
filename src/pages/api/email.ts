@@ -21,12 +21,14 @@ export const POST: APIRoute = async ({ request }) => {
   const formData = await request.formData();
   const email = formData.get("email")?.toString() || "";
   const message = formData.get("message")?.toString() || "";
-  const turnstileToken =
-    formData.get("cf-turnstile-response")?.toString() || "";
-
+  
   if (!email || !message) {
     return redirectToResultPage(false, "email or message is empty!");
   }
+
+  /**
+  const turnstileToken =
+    formData.get("cf-turnstile-response")?.toString() || "";
 
   if (!turnstileToken) {
     return redirectToResultPage(false, "please verify the captcha!");
@@ -49,6 +51,7 @@ export const POST: APIRoute = async ({ request }) => {
   if (turnstileError || !turnstileResult.success) {
     return redirectToResultPage(false, "verify captcha failed!");
   }
+     */
 
   const transporter = nodemailer.createTransport({
     host: import.meta.env.SMTP_HOST,
