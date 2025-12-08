@@ -19,7 +19,7 @@ import Icon from "./Icon.astro";
   if (!window.__themeToggleInitialized) {
     window.__themeToggleInitialized = true;
     
-    document.addEventListener("click", (e) => {
+    document.addEventListener("click", async (e) => {
       // 检查点击的是否是主题切换按钮或其子元素
       const themeBtn = e.target.closest("#theme-btn");
       
@@ -27,10 +27,65 @@ import Icon from "./Icon.astro";
         const currentTheme = document.documentElement.getAttribute("data-theme");
         const newTheme = currentTheme === "dark" ? "light" : "dark";
         
-        document.documentElement.setAttribute("data-theme", newTheme);
-        localStorage.setItem("theme", newTheme);
+        // 检查浏览器是否支持 View Transitions API
+        if (!document.startViewTransition) {
+          // 不支持则直接切换
+          document.documentElement.setAttribute("data-theme", newTheme);
+          localStorage.setItem("theme", newTheme);
+          return;
+        }
+        
+        // 获取点击坐标
+        const x = e.clientX;
+        const y = e.clientY;
+        
+        // 计算需要的最大半径（覆盖整个屏幕的对角线）
+        const endRadius = Math.hypot(
+          Math.max(x, window.innerWidth - x),
+          Math.max(y, window.innerHeight - y)
+        );
+        
+        // 设置 CSS 自定义属性用于动画
+        document.documentElement.style.setProperty('--ripple-x', x + 'px');
+        document.documentElement.style.setProperty('--ripple-y', y + 'px');
+        document.documentElement.style.setProperty('--ripple-radius', endRadius + 'px');
+        
+        // 启动视图过渡动画
+        const transition = document.startViewTransition(() => {
+          document.documentElement.setAttribute("data-theme", newTheme);
+          localStorage.setItem("theme", newTheme);
+        });
+        
+        // 等待过渡完成
+        await transition.ready;
       }
     });
   }
 </script>
+
+<style is:global>
+  /* View Transitions API 样式 */
+  /* 只在支持的浏览器中应用 */
+  @supports (view-transition-name: root) {
+    /* 禁用默认的交叉淡入淡出动画 */
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation: none;
+      mix-blend-mode: normal;
+    }
+    
+    /* 设置新视图的涟漪动画 */
+    ::view-transition-new(root) {
+      clip-path: circle(0 at var(--ripple-x, 50%) var(--ripple-y, 50%));
+      animation: ripple-expand 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+    
+    /* 涟漪扩散动画 */
+    @keyframes ripple-expand {
+      to {
+        clip-path: circle(var(--ripple-radius, 100vmax) at var(--ripple-x, 50%) var(--ripple-y, 50%));
+      }
+    }
+  }
+</style>
 
