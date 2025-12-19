@@ -13,6 +13,7 @@
     # pkgs.nodePackages.nodemon
     # pkgs.pnpm
     pkgs.bun
+    pkgs.openssh
   ];
 
   # Sets environment variables in the workspace
