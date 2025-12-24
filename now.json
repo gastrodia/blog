@@ -1,8 +1,5 @@
 {
-    "version": 2,
-    "build": {
-        "env": {
-          "TZ": "Asia/Shanghai"
-        }
+    "env": {
+      "TZ": "Asia/Shanghai"
     }
-}
+  }
