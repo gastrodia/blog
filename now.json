@@ -1,5 +1,14 @@
 {
-    "env": {
-      "TZ": "Asia/Shanghai"
-    }
+    "builds": [
+      {
+        "src": "package.json",
+        "use": "@vercel/next",
+        "config": {
+          "env": {
+            "TZ": "Asia/Shanghai"
+          }
+        }
+      }
+    ]
   }
+  
