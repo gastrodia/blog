@@ -1,12 +1,7 @@
 {
-    "builds": [
-      {
-        "config": {
-          "env": {
-            "TZ": "Asia/Shanghai"
-          }
+    "build": {
+        "env": {
+          "TZ": "Asia/Shanghai"
         }
-      }
-    ]
-  }
-  
+    }
+}
