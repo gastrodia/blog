@@ -48,7 +48,7 @@ const structuredData = {
 };
 
 // 将src/assets/icons目录下的所有svg文件生成一个svg sprite
-const icons = import.meta.glob("@/assets/icons/*.svg", { as: 'raw', eager: true });
+const icons = import.meta.glob<string>("@/assets/icons/*.svg", { query: '?raw', eager: true, import: 'default' });
 // 转为symbol 
 const svgSprite = Object.entries(icons).map(([key, svgContent]) => {
   const name = key.split("/").pop()?.replace(".svg", "").replace("Icon", "") || "";

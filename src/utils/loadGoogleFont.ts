@@ -5,7 +5,6 @@ async function loadGoogleFont(
 ): Promise<ArrayBuffer> {
   const API = `https://fonts.googleapis.com/css2?family=${font}:wght@${weight}&text=${encodeURIComponent(text)}`;
 
-  console.log(`API:`, API);
   const css = await (
     await fetch(API, {
       headers: {
