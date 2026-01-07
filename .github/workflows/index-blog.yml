@@ -1,0 +1,47 @@
+name: 索引博客文章
+
+on:
+  push:
+    branches:
+      - main  # 或者你的默认分支名称，如果是 master 请修改
+    paths:
+      - 'src/data/blog/**'  # 博客文章目录
+      - 'src/config.ts'      # 配置文件
+      - 'src/constants.ts'   # 常量文件
+
+jobs:
+  index-blog:
+    # 只在 commit message 以 "docs:" 开头时运行
+    if: startsWith(github.event.head_commit.message, 'docs:')
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      
+      - name: 设置 Bun 环境
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+      
+      - name: 安装依赖
+        run: bun install
+      
+      - name: 运行博客索引脚本
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+        run: bun run index-blog
+      
+      - name: 索引完成通知
+        if: success()
+        run: |
+          echo "✅ 博客索引更新成功！"
+          echo "Commit: ${{ github.event.head_commit.message }}"
+      
+      - name: 索引失败通知
+        if: failure()
+        run: |
+          echo "❌ 博客索引更新失败！"
+          echo "Commit: ${{ github.event.head_commit.message }}"
