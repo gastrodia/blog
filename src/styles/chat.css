@@ -1,0 +1,321 @@
+  /* 悬浮按钮样式 */
+  .chat-button {
+      position: relative;
+      background: linear-gradient(135deg, var(--color-accent) 0%, #667eea 100%);
+      color: white;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2),
+          0 2px 8px rgba(102, 126, 234, 0.3);
+      transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+      overflow: visible;
+  }
+
+  /* 悬浮光晕效果 */
+  .chat-button::before {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--color-accent), #667eea);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: -1;
+      filter: blur(8px);
+  }
+
+  .chat-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25),
+          0 3px 12px rgba(102, 126, 234, 0.4);
+  }
+
+  .chat-button:hover::before {
+      opacity: 0.6;
+  }
+
+  .chat-button:active {
+      transform: scale(0.95);
+  }
+
+  /* 按钮显示/隐藏状态 */
+  .chat-button.chat-hidden {
+      opacity: 0;
+      transform: scale(0);
+      pointer-events: none;
+  }
+
+  .chat-button.visible {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+      animation: slideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes slideIn {
+      from {
+          opacity: 0;
+          transform: scale(0.5) translateY(20px);
+      }
+
+      to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+      }
+  }
+
+  /* 聊天窗口显示/隐藏 */
+  .chat-window {
+      transform-origin: bottom right;
+      transition: opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+          transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .chat-window.chat-hidden {
+      opacity: 0;
+      transform: scale(0.1);
+      pointer-events: none;
+  }
+
+  .chat-window.open {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+  }
+
+  @media (max-width: 768px) {
+      .chat-window {
+          transform-origin: bottom center;
+      }
+
+      .chat-window.chat-hidden {
+          opacity: 0;
+          transform: translateY(100%) scale(0.9);
+      }
+
+      .chat-window.open {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+      }
+  }
+
+  /* 消息淡入动画 */
+  .message {
+      animation: fadeIn 0.3s ease-in;
+  }
+
+  @keyframes fadeIn {
+      from {
+          opacity: 0;
+          transform: translateY(10px);
+      }
+
+      to {
+          opacity: 1;
+          transform: translateY(0);
+      }
+  }
+
+  /* 打字指示器动画 */
+  .typing-indicator span {
+      animation: typing 1.4s infinite;
+  }
+
+  .typing-indicator span:nth-child(2) {
+      animation-delay: 0.2s;
+  }
+
+  .typing-indicator span:nth-child(3) {
+      animation-delay: 0.4s;
+  }
+
+  @keyframes typing {
+
+      0%,
+      60%,
+      100% {
+          opacity: 0.4;
+          transform: translateY(0);
+      }
+
+      30% {
+          opacity: 1;
+          transform: translateY(-8px);
+      }
+  }
+
+  /* 滚动条样式 */
+  #chat-messages::-webkit-scrollbar {
+      width: 6px;
+  }
+
+  #chat-messages::-webkit-scrollbar-track {
+      background: transparent;
+  }
+
+  #chat-messages::-webkit-scrollbar-thumb {
+      background: var(--color-muted);
+      border-radius: 3px;
+  }
+
+  #chat-messages::-webkit-scrollbar-thumb:hover {
+      background: var(--color-border);
+  }
+
+  /* Markdown 内容样式 */
+  .markdown-content {
+      line-height: 1.6;
+  }
+
+  .markdown-content p {
+      margin: 0.5em 0;
+  }
+
+  .markdown-content p:first-child {
+      margin-top: 0;
+  }
+
+  .markdown-content p:last-child {
+      margin-bottom: 0;
+  }
+
+  .markdown-content h1,
+  .markdown-content h2,
+  .markdown-content h3,
+  .markdown-content h4,
+  .markdown-content h5,
+  .markdown-content h6 {
+      margin: 1em 0 0.5em 0;
+      font-weight: 600;
+      line-height: 1.3;
+  }
+
+  .markdown-content h1:first-child,
+  .markdown-content h2:first-child,
+  .markdown-content h3:first-child {
+      margin-top: 0;
+  }
+
+  .markdown-content h1 {
+      font-size: 1.5em;
+  }
+
+  .markdown-content h2 {
+      font-size: 1.3em;
+  }
+
+  .markdown-content h3 {
+      font-size: 1.1em;
+  }
+
+  .markdown-content code {
+      background: rgba(0, 0, 0, 0.1);
+      padding: 0.1em 0.3em;
+      border-radius: 3px;
+      font-size: 0.9em;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  }
+
+  :global(.dark) .markdown-content code {
+      background: rgba(255, 255, 255, 0.1);
+  }
+
+  .markdown-content pre {
+      margin: 0.75em 0;
+      padding: 0.75em;
+      border-radius: 6px;
+      overflow-x: auto;
+      background: #f6f8fa !important;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  :global(.dark) .markdown-content pre {
+      background: #161b22 !important;
+      border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .markdown-content pre code {
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
+      font-size: 0.85em;
+      line-height: 1.5;
+  }
+
+  .markdown-content ul,
+  .markdown-content ol {
+      margin: 0.5em 0;
+      padding-left: 1.5em;
+  }
+
+  .markdown-content li {
+      margin: 0.25em 0;
+  }
+
+  .markdown-content blockquote {
+      margin: 0.5em 0;
+      padding: 0.5em 1em;
+      border-left: 3px solid var(--color-accent);
+      background: rgba(0, 0, 0, 0.03);
+      color: inherit;
+  }
+
+  :global(.dark) .markdown-content blockquote {
+      background: rgba(255, 255, 255, 0.03);
+  }
+
+  .markdown-content a {
+      color: var(--color-accent);
+      text-decoration: none;
+  }
+
+  .markdown-content a:hover {
+      text-decoration: underline;
+  }
+
+  .markdown-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.75em 0;
+      font-size: 0.9em;
+  }
+
+  .markdown-content table th,
+  .markdown-content table td {
+      padding: 0.5em;
+      border: 1px solid var(--color-border);
+      text-align: left;
+  }
+
+  .markdown-content table th {
+      background: var(--color-muted);
+      font-weight: 600;
+  }
+
+  .markdown-content hr {
+      margin: 1em 0;
+      border: none;
+      border-top: 1px solid var(--color-border);
+  }
+
+  .markdown-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+      margin: 0.5em 0;
+  }
+
+  /* Shiki 代码高亮容器样式 */
+  .markdown-content :global(.shiki) {
+      padding: 0.75em !important;
+      border-radius: 6px !important;
+      overflow-x: auto;
+      margin: 0.75em 0;
+      font-size: 0.85em;
+      line-height: 1.5;
+  }
+
+  .markdown-content :global(.shiki code) {
+      background: transparent !important;
+      padding: 0 !important;
+  }

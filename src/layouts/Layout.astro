@@ -4,6 +4,8 @@ import { PUBLIC_GOOGLE_SITE_VERIFICATION } from "astro:env/client";
 import { SITE } from "@/config";
 import "@/styles/global.css";
 import svg2symbol from "@/utils/svg2symbol";
+import "@/styles/chat.css";
+import ChatWidget from "@/components/ChatWidget/index.astro";
 
 export interface Props {
   title?: string;
@@ -181,6 +183,7 @@ const svgSprite = Object.entries(icons).map(([key, svgContent]) => {
   <body>
     <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="position: absolute; width: 0; height: 0; overflow: hidden;" set:html={svgSprite.join("")}></svg>
     <slot />
+    <ChatWidget />
   </body>
 </html>
 

@@ -56,6 +56,21 @@ export default defineConfig({
         context: "client",
         optional: true,
       }),
+      GEMINI_API_KEY: envField.string({
+        access: "secret",
+        context: "server",
+        optional: false,
+      }),
+      GROQ_API_KEY: envField.string({
+        access: "secret",
+        context: "server",
+        optional: false,
+      }),
+      POSTGRES_URL: envField.string({
+        access: "secret",
+        context: "server",
+        optional: false,
+      }),
     },
   },
   experimental: {
