@@ -54,6 +54,7 @@ class ChatWidget {
     this.updateElements();
 
     // 初始化按钮为可见状态
+    this.elements.button?.classList.remove("chat-hidden");
     this.elements.button?.classList.add("visible");
     
     // 初始化 Shiki 高亮器（只初始化一次）
@@ -217,6 +218,40 @@ class ChatWidget {
             .replace(/>/g, "&gt;");
           return `<pre><code class="language-${lang}">${escapedText}</code></pre>`;
         }
+      };
+
+      // 自定义链接渲染器，确保链接正确处理
+      renderer.link = ({ href, title, text }: { href: string; title?: string | null; text: string }): string => {
+        // 清理 href，移除可能错误包含的中文字符
+        let cleanHref = href;
+        
+        // 如果href包含编码的中文字符（%E开头），尝试解码并截断
+        try {
+          const decoded = decodeURIComponent(href);
+          // 查找常见的中文标点符号，作为URL结束的标志
+          const endMarkers = ['。', '，', '、', '；', '：', '！', '？', ' ', '\n'];
+          let endPos = -1;
+          
+          for (const marker of endMarkers) {
+            const pos = decoded.indexOf(marker);
+            if (pos > 0 && (endPos === -1 || pos < endPos)) {
+              endPos = pos;
+            }
+          }
+          
+          if (endPos > 0) {
+            cleanHref = decoded.substring(0, endPos);
+          }
+        } catch (e) {
+          // 解码失败，使用原始href
+        }
+        
+        const titleAttr = title ? ` title="${title}"` : '';
+        const escapedHref = cleanHref
+          .replace(/&/g, "&amp;")
+          .replace(/"/g, "&quot;");
+        
+        return `<a href="${escapedHref}"${titleAttr} target="_blank" rel="noopener noreferrer" class="text-accent underline hover:text-accent/80">${text}</a>`;
       };
 
       marked.setOptions({
@@ -553,11 +588,23 @@ class ChatWidget {
               <div class="font-semibold mb-2 text-foreground">📚 参考来源：</div>
               ${msg.sources
                 .map(
-                  (src) => `
+                  (src) => {
+                    // 检查是否是 md/mdx 文件
+                    const isMdFile = /\.mdx?$/i.test(src.source);
+                    if (isMdFile) {
+                      return `
                 <a href="/posts/p${src.source.replace(/\.mdx?$/, "")}" class="flex justify-between items-center px-2 py-2 mt-1 bg-muted rounded text-foreground no-underline transition-all text-xs hover:bg-accent hover:text-background" target="_blank">
                   <span>${src.title}</span> <span class="font-semibold opacity-70">${src.similarity}%</span>
                 </a>
-              `
+              `;
+                    } else {
+                      return `
+                <div class="flex justify-between items-center px-2 py-2 mt-1 bg-muted rounded text-foreground text-xs opacity-75 cursor-default">
+                  <span>${src.title}</span> <span class="font-semibold opacity-70">${src.similarity}%</span>
+                </div>
+              `;
+                    }
+                  }
                 )
                 .join("")}
             </div>
@@ -599,8 +646,15 @@ class ChatWidget {
     }
 
     try {
+      // 预处理：修复URL后面跟中文标点的问题
+      // 将裸露的URL转换为markdown链接格式，并在中文标点前截断
+      const processedContent = content.replace(
+        /(https?:\/\/[^\s<>）】\]]+?)([。，、；：！？）】\]])/g,
+        '[$1]($1)$2'
+      );
+      
       // 使用 marked 渲染 markdown
-      const html = marked.parse(content, { async: false }) as string;
+      const html = marked.parse(processedContent, { async: false }) as string;
       return html;
     } catch (error) {
       console.error("Markdown 渲染失败:", error);
