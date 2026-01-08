@@ -36,6 +36,7 @@ class ChatWidget {
   private highlighter: Highlighter | null = null;
   private initPromise: Promise<void>;
   private eventsBound: boolean = false;
+  private isAnimating: boolean = false; // 添加动画状态标志
 
   constructor(name: string) {
     this.state = {
@@ -53,9 +54,14 @@ class ChatWidget {
     // 重新获取 DOM 元素（支持客户端路由后重新初始化）
     this.updateElements();
 
+    // 重置动画状态
+    this.isAnimating = false;
+
     // 初始化按钮为可见状态
-    this.elements.button?.classList.remove("chat-hidden");
-    this.elements.button?.classList.add("visible");
+    if (this.elements.button) {
+      this.elements.button.classList.remove("chat-hidden");
+      this.elements.button.classList.add("visible");
+    }
     
     // 初始化 Shiki 高亮器（只初始化一次）
     if (!this.highlighter) {
@@ -99,14 +105,20 @@ class ChatWidget {
       input: !!this.elements.input
     });
     
-    // 重置状态：确保窗口是关闭状态
+    // 重置所有状态
     this.state.isOpen = false;
+    this.isAnimating = false;
     
-    // 重置 UI：窗口隐藏，按钮显示
-    this.elements.window?.classList.remove("open");
-    this.elements.window?.classList.add("chat-hidden");
-    this.elements.button?.classList.remove("chat-hidden");
-    this.elements.button?.classList.add("visible");
+    // 强制重置 UI：窗口隐藏，按钮显示
+    if (this.elements.window) {
+      this.elements.window.classList.remove("open");
+      this.elements.window.classList.add("chat-hidden");
+    }
+    
+    if (this.elements.button) {
+      this.elements.button.classList.remove("chat-hidden");
+      this.elements.button.classList.add("visible");
+    }
     
     // 重新绑定事件
     this.rebindButtonEvents();
@@ -242,7 +254,7 @@ class ChatWidget {
           if (endPos > 0) {
             cleanHref = decoded.substring(0, endPos);
           }
-        } catch (e) {
+        } catch {
           // 解码失败，使用原始href
         }
         
@@ -294,37 +306,72 @@ class ChatWidget {
 
   // 打开/关闭聊天
   private toggleChat() {
+    // 防止动画进行中的重复点击
+    if (this.isAnimating) {
+      return;
+    }
+    
     this.state.isOpen = !this.state.isOpen;
     this.updateUI();
   }
 
   private closeChat() {
+    // 防止动画进行中的重复点击
+    if (this.isAnimating) {
+      return;
+    }
+    
     this.state.isOpen = false;
     this.updateUI();
   }
 
   private updateUI() {
+    // 标记动画开始
+    this.isAnimating = true;
+    
     if (this.state.isOpen) {
-      // 先隐藏按钮
-      this.elements.button?.classList.remove("visible");
-      this.elements.button?.classList.add("chat-hidden");
+      // 立即隐藏按钮
+      if (this.elements.button) {
+        this.elements.button.classList.remove("visible");
+        this.elements.button.classList.add("chat-hidden");
+        // 确保 CSS 过渡生效
+        void this.elements.button.offsetHeight;
+      }
       
       // 延迟显示窗口，创建流畅的过渡效果
       setTimeout(() => {
-        this.elements.window?.classList.remove("chat-hidden");
-        this.elements.window?.classList.add("open");
+        if (this.elements.window) {
+          this.elements.window.classList.remove("chat-hidden");
+          this.elements.window.classList.add("open");
+        }
         this.elements.input?.focus();
         this.scrollToBottom();
+        
+        // 动画完成后解锁
+        setTimeout(() => {
+          this.isAnimating = false;
+        }, 400);
       }, 150);
     } else {
-      // 先隐藏窗口
-      this.elements.window?.classList.remove("open");
-      this.elements.window?.classList.add("chat-hidden");
+      // 立即隐藏窗口
+      if (this.elements.window) {
+        this.elements.window.classList.remove("open");
+        this.elements.window.classList.add("chat-hidden");
+        // 确保 CSS 过渡生效
+        void this.elements.window.offsetHeight;
+      }
       
       // 延迟显示按钮，创建流畅的过渡效果
       setTimeout(() => {
-        this.elements.button?.classList.remove("chat-hidden");
-        this.elements.button?.classList.add("visible");
+        if (this.elements.button) {
+          this.elements.button.classList.remove("chat-hidden");
+          this.elements.button.classList.add("visible");
+        }
+        
+        // 动画完成后解锁
+        setTimeout(() => {
+          this.isAnimating = false;
+        }, 300);
       }, 200);
     }
   }
