@@ -1,321 +1,352 @@
-  /* 悬浮按钮样式 */
-  .chat-button {
-      position: relative;
-      background: linear-gradient(135deg, var(--color-accent) 0%, #667eea 100%);
-      color: white;
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2),
-          0 2px 8px rgba(102, 126, 234, 0.3);
-      transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
-      overflow: visible;
+/* ============= 聊天组件样式 ============= */
+@layer components {
+    /* 聊天按钮 */
+    .chat-button {
+        @apply fixed bottom-6 right-6 size-14 rounded-full;
+        @apply flex items-center justify-center text-2xl;
+        @apply z-10000 relative overflow-visible;
+        @apply text-white border-none cursor-pointer;
+        @apply md:bottom-6 md:right-6;
+        @apply max-md:bottom-4 max-md:right-4 max-md:size-[50px] max-md:text-xl;
+        @apply transition-all duration-300 ease-in-out;
+        
+        background: linear-gradient(135deg, var(--color-accent) 0%, #667eea 100%);
+        box-shadow: 
+            0 4px 15px rgba(0, 0, 0, 0.2),
+            0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+  
+    /* 光晕效果 */
+    .chat-button::before {
+        @apply absolute rounded-full opacity-0 -z-10;
+        @apply transition-opacity duration-300 ease-in-out;
+        
+        content: '';
+        inset: -3px;
+        background: linear-gradient(135deg, var(--color-accent), #667eea);
+        filter: blur(8px);
+    }
+  
+    .chat-button:hover {
+        @apply scale-105;
+        
+        box-shadow: 
+            0 6px 20px rgba(0, 0, 0, 0.25),
+            0 3px 12px rgba(102, 126, 234, 0.4);
+    }
+  
+    .chat-button:hover::before {
+        @apply opacity-60;
+    }
+  
+    .chat-button:active {
+        @apply scale-95;
+    }
+  
+    /* 显示/隐藏状态 */
+    .chat-button.chat-hidden {
+        @apply opacity-0 scale-0 pointer-events-none;
+    }
+  
+    .chat-button.visible {
+        @apply opacity-100 scale-100 pointer-events-auto;
+        animation: slideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+  
+    /* 聊天窗口 */
+    .chat-window {
+        @apply fixed bottom-6 right-6 w-[400px] h-[600px];
+        @apply bg-background border border-border rounded-2xl shadow-2xl;
+        @apply flex flex-col overflow-hidden z-9999;
+        @apply max-md:inset-x-0 max-md:bottom-0 max-md:w-full max-md:h-[90vh];
+        @apply max-md:rounded-t-2xl max-md:rounded-b-none max-md:border-b-0;
+        
+        transform-origin: bottom right;
+        transition: 
+            opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+            transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+  
+    .chat-window.chat-hidden {
+        @apply opacity-0 pointer-events-none;
+        transform: scale(0.1);
+    }
+  
+    .chat-window.open {
+        @apply opacity-100 pointer-events-auto;
+        transform: scale(1);
+    }
+  
+    /* 移动端窗口动画 */
+    @media (max-width: 768px) {
+        .chat-window {
+            transform-origin: bottom center;
+        }
+  
+        .chat-window.chat-hidden {
+            opacity: 0;
+            transform: translateY(100%) scale(0.9);
+        }
+  
+        .chat-window.open {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+  
+    /* 窗口标题栏 */
+    .chat-header {
+        @apply px-4 py-1 bg-accent text-background;
+        @apply flex justify-between items-center border-b border-border;
+    }
+  
+    /* 图标按钮 */
+    .chat-icon-button {
+        @apply border-none text-background cursor-pointer p-1 rounded;
+        @apply transition-transform flex items-center justify-center text-xl;
+        @apply hover:scale-110;
+    }
+  
+    /* 输入框 */
+    .chat-input {
+        @apply flex-1 px-3 py-2 border border-border rounded-lg;
+        @apply bg-background text-foreground text-sm outline-none;
+        @apply transition-colors focus:border-accent;
+    }
+  
+    /* 发送按钮 */
+    .chat-send-button {
+        @apply px-4 py-2 bg-accent text-background border-none rounded-lg cursor-pointer text-xl;
+        @apply transition-all flex items-center justify-center;
+        @apply hover:opacity-90 hover:scale-105 active:scale-95;
+        @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+  
+    /* 消息样式 */
+    .message {
+        animation: fadeIn 0.3s ease-in;
+    }
+  
+    .chat-message-user {
+        @apply flex flex-col max-w-[85%] self-end;
+    }
+  
+    .chat-message-assistant {
+        @apply flex flex-col max-w-[85%] self-start;
+    }
+  
+    .chat-content-user {
+        @apply px-4 py-3 rounded-2xl rounded-br-sm;
+        @apply bg-accent text-background;
+        @apply leading-relaxed;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+  
+    .chat-content-assistant {
+        @apply px-4 py-3 rounded-2xl rounded-bl-sm;
+        @apply bg-muted text-foreground;
+        @apply leading-relaxed;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+  
+    .chat-content-loading {
+        @apply px-4 py-3 rounded-2xl rounded-bl-sm;
+        @apply bg-muted text-foreground;
+        @apply leading-relaxed;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+  
+    /* 打字指示器 */
+    .typing-indicator span {
+        animation: typing 1.4s infinite;
+    }
+  
+    .typing-indicator span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+  
+    .typing-indicator span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+  
+    /* 滚动条样式 */
+    #chat-messages::-webkit-scrollbar {
+        @apply w-1.5;
+    }
+  
+    #chat-messages::-webkit-scrollbar-track {
+        @apply bg-transparent;
+    }
+  
+    #chat-messages::-webkit-scrollbar-thumb {
+        @apply bg-muted rounded;
+    }
+  
+    #chat-messages::-webkit-scrollbar-thumb:hover {
+        @apply bg-border;
+    }
+  
+    /* Markdown 内容样式 */
+    .chat-md-content {
+        @apply leading-relaxed;
+    }
+  
+    .chat-md-content p {
+        @apply my-2;
+    }
+  
+    .chat-md-content p:first-child {
+        @apply mt-0;
+    }
+  
+    .chat-md-content p:last-child {
+        @apply mb-0;
+    }
+  
+    /* 标题 */
+    .chat-md-content h1,
+    .chat-md-content h2,
+    .chat-md-content h3,
+    .chat-md-content h4,
+    .chat-md-content h5,
+    .chat-md-content h6 {
+        @apply font-semibold leading-tight;
+        margin: 1em 0 0.5em;
+    }
+  
+    .chat-md-content h1:first-child,
+    .chat-md-content h2:first-child,
+    .chat-md-content h3:first-child {
+        @apply mt-0;
+    }
+  
+    .chat-md-content h1 { @apply text-2xl; }
+    .chat-md-content h2 { @apply text-xl; }
+    .chat-md-content h3 { @apply text-lg; }
+  
+    /* 行内代码 */
+    .chat-md-content code {
+        @apply px-1 py-0.5 rounded text-sm font-mono;
+        background: rgba(0, 0, 0, 0.1);
+    }
+  
+    :global(.dark) .chat-md-content code {
+        background: rgba(255, 255, 255, 0.1);
+    }
+  
+    /* 代码块 */
+    .chat-md-content pre {
+        @apply my-3 p-3 rounded-md overflow-x-auto border border-black/10;
+        background: #f6f8fa !important;
+    }
+  
+    :global(.dark) .chat-md-content pre {
+        @apply border-white/10;
+        background: #161b22 !important;
+    }
+  
+    .chat-md-content pre code {
+        @apply bg-transparent p-0 rounded-none text-sm leading-normal;
+    }
+  
+    /* 列表 */
+    .chat-md-content ul,
+    .chat-md-content ol {
+        @apply my-2 pl-6;
+    }
+  
+    .chat-md-content li {
+        @apply my-1;
+    }
+  
+    /* 引用 */
+    .chat-md-content blockquote {
+        @apply my-2 py-2 px-4 border-l-[3px] border-accent;
+        background: rgba(0, 0, 0, 0.03);
+    }
+  
+    :global(.dark) .chat-md-content blockquote {
+        background: rgba(255, 255, 255, 0.03);
+    }
+  
+    /* 链接 */
+    .chat-md-content a {
+        @apply text-accent no-underline;
+    }
+  
+    .chat-md-content a:hover {
+        @apply underline;
+    }
+  
+    /* 表格 */
+    .chat-md-content table {
+        @apply w-full border-collapse my-3 text-sm;
+    }
+  
+    .chat-md-content table th,
+    .chat-md-content table td {
+        @apply p-2 border border-border text-left;
+    }
+  
+    .chat-md-content table th {
+        @apply bg-muted font-semibold;
+    }
+  
+    /* 分隔线 */
+    .chat-md-content hr {
+        @apply my-4 border-0 border-t border-border;
+    }
+  
+    /* 图片 */
+    .chat-md-content img {
+        @apply max-w-full h-auto rounded my-2;
+    }
+  
+    /* Shiki 代码高亮 */
+    .chat-md-content :global(.shiki) {
+        @apply p-3 rounded-md overflow-x-auto my-3 text-sm leading-normal;
+    }
+  
+    .chat-md-content :global(.shiki code) {
+        @apply bg-transparent p-0;
+    }
   }
-
-  /* 悬浮光晕效果 */
-  .chat-button::before {
-      content: '';
-      position: absolute;
-      inset: -3px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--color-accent), #667eea);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      z-index: -1;
-      filter: blur(8px);
-  }
-
-  .chat-button:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25),
-          0 3px 12px rgba(102, 126, 234, 0.4);
-  }
-
-  .chat-button:hover::before {
-      opacity: 0.6;
-  }
-
-  .chat-button:active {
-      transform: scale(0.95);
-  }
-
-  /* 按钮显示/隐藏状态 */
-  .chat-button.chat-hidden {
-      opacity: 0;
-      transform: scale(0);
-      pointer-events: none;
-  }
-
-  .chat-button.visible {
-      opacity: 1;
-      transform: scale(1);
-      pointer-events: auto;
-      animation: slideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  @keyframes slideIn {
+  
+  /* ============= 动画关键帧 ============= */
+  @layer utilities {
+    @keyframes slideIn {
       from {
-          opacity: 0;
-          transform: scale(0.5) translateY(20px);
+        opacity: 0;
+        transform: scale(0.5) translateY(20px);
       }
-
       to {
-          opacity: 1;
-          transform: scale(1) translateY(0);
+        opacity: 1;
+        transform: scale(1) translateY(0);
       }
-  }
-
-  /* 聊天窗口显示/隐藏 */
-  .chat-window {
-      transform-origin: bottom right;
-      transition: opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
-          transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  .chat-window.chat-hidden {
-      opacity: 0;
-      transform: scale(0.1);
-      pointer-events: none;
-  }
-
-  .chat-window.open {
-      opacity: 1;
-      transform: scale(1);
-      pointer-events: auto;
-  }
-
-  @media (max-width: 768px) {
-      .chat-window {
-          transform-origin: bottom center;
-      }
-
-      .chat-window.chat-hidden {
-          opacity: 0;
-          transform: translateY(100%) scale(0.9);
-      }
-
-      .chat-window.open {
-          opacity: 1;
-          transform: translateY(0) scale(1);
-      }
-  }
-
-  /* 消息淡入动画 */
-  .message {
-      animation: fadeIn 0.3s ease-in;
-  }
-
-  @keyframes fadeIn {
+    }
+  
+    @keyframes fadeIn {
       from {
-          opacity: 0;
-          transform: translateY(10px);
+        opacity: 0;
+        transform: translateY(10px);
       }
-
       to {
-          opacity: 1;
-          transform: translateY(0);
+        opacity: 1;
+        transform: translateY(0);
       }
-  }
-
-  /* 打字指示器动画 */
-  .typing-indicator span {
-      animation: typing 1.4s infinite;
-  }
-
-  .typing-indicator span:nth-child(2) {
-      animation-delay: 0.2s;
-  }
-
-  .typing-indicator span:nth-child(3) {
-      animation-delay: 0.4s;
-  }
-
-  @keyframes typing {
-
-      0%,
-      60%,
-      100% {
-          opacity: 0.4;
-          transform: translateY(0);
+    }
+  
+    @keyframes typing {
+      0%, 60%, 100% {
+        opacity: 0.4;
+        transform: translateY(0);
       }
-
       30% {
-          opacity: 1;
-          transform: translateY(-8px);
+        opacity: 1;
+        transform: translateY(-8px);
       }
-  }
-
-  /* 滚动条样式 */
-  #chat-messages::-webkit-scrollbar {
-      width: 6px;
-  }
-
-  #chat-messages::-webkit-scrollbar-track {
-      background: transparent;
-  }
-
-  #chat-messages::-webkit-scrollbar-thumb {
-      background: var(--color-muted);
-      border-radius: 3px;
-  }
-
-  #chat-messages::-webkit-scrollbar-thumb:hover {
-      background: var(--color-border);
-  }
-
-  /* Markdown 内容样式 */
-  .markdown-content {
-      line-height: 1.6;
-  }
-
-  .markdown-content p {
-      margin: 0.5em 0;
-  }
-
-  .markdown-content p:first-child {
-      margin-top: 0;
-  }
-
-  .markdown-content p:last-child {
-      margin-bottom: 0;
-  }
-
-  .markdown-content h1,
-  .markdown-content h2,
-  .markdown-content h3,
-  .markdown-content h4,
-  .markdown-content h5,
-  .markdown-content h6 {
-      margin: 1em 0 0.5em 0;
-      font-weight: 600;
-      line-height: 1.3;
-  }
-
-  .markdown-content h1:first-child,
-  .markdown-content h2:first-child,
-  .markdown-content h3:first-child {
-      margin-top: 0;
-  }
-
-  .markdown-content h1 {
-      font-size: 1.5em;
-  }
-
-  .markdown-content h2 {
-      font-size: 1.3em;
-  }
-
-  .markdown-content h3 {
-      font-size: 1.1em;
-  }
-
-  .markdown-content code {
-      background: rgba(0, 0, 0, 0.1);
-      padding: 0.1em 0.3em;
-      border-radius: 3px;
-      font-size: 0.9em;
-      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  }
-
-  :global(.dark) .markdown-content code {
-      background: rgba(255, 255, 255, 0.1);
-  }
-
-  .markdown-content pre {
-      margin: 0.75em 0;
-      padding: 0.75em;
-      border-radius: 6px;
-      overflow-x: auto;
-      background: #f6f8fa !important;
-      border: 1px solid rgba(0, 0, 0, 0.1);
-  }
-
-  :global(.dark) .markdown-content pre {
-      background: #161b22 !important;
-      border-color: rgba(255, 255, 255, 0.1);
-  }
-
-  .markdown-content pre code {
-      background: transparent;
-      padding: 0;
-      border-radius: 0;
-      font-size: 0.85em;
-      line-height: 1.5;
-  }
-
-  .markdown-content ul,
-  .markdown-content ol {
-      margin: 0.5em 0;
-      padding-left: 1.5em;
-  }
-
-  .markdown-content li {
-      margin: 0.25em 0;
-  }
-
-  .markdown-content blockquote {
-      margin: 0.5em 0;
-      padding: 0.5em 1em;
-      border-left: 3px solid var(--color-accent);
-      background: rgba(0, 0, 0, 0.03);
-      color: inherit;
-  }
-
-  :global(.dark) .markdown-content blockquote {
-      background: rgba(255, 255, 255, 0.03);
-  }
-
-  .markdown-content a {
-      color: var(--color-accent);
-      text-decoration: none;
-  }
-
-  .markdown-content a:hover {
-      text-decoration: underline;
-  }
-
-  .markdown-content table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 0.75em 0;
-      font-size: 0.9em;
-  }
-
-  .markdown-content table th,
-  .markdown-content table td {
-      padding: 0.5em;
-      border: 1px solid var(--color-border);
-      text-align: left;
-  }
-
-  .markdown-content table th {
-      background: var(--color-muted);
-      font-weight: 600;
-  }
-
-  .markdown-content hr {
-      margin: 1em 0;
-      border: none;
-      border-top: 1px solid var(--color-border);
-  }
-
-  .markdown-content img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 4px;
-      margin: 0.5em 0;
-  }
-
-  /* Shiki 代码高亮容器样式 */
-  .markdown-content :global(.shiki) {
-      padding: 0.75em !important;
-      border-radius: 6px !important;
-      overflow-x: auto;
-      margin: 0.75em 0;
-      font-size: 0.85em;
-      line-height: 1.5;
-  }
-
-  .markdown-content :global(.shiki code) {
-      background: transparent !important;
-      padding: 0 !important;
+    }
   }

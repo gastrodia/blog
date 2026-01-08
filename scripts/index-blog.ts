@@ -130,18 +130,15 @@ async function loadSiteConfigDocuments(): Promise<Document[]> {
       title: "关于作者 / 笔者信息",
       description: `${SITE.author} 的个人简介和联系方式`,
       text: `
-关于我：
+关于作者：
 ${PROFILE.aboutMe.replace(/<\/?mark>/g, '')}
 
-职位：${PROFILE.synopsis}
-简历：${PROFILE.resume}
-头像：${PROFILE.avatar}
-简历文件名：${PROFILE.resumeName}
+作者职位：${PROFILE.synopsis}
 
-联系方式：
+作者联系方式：
 ${socialLinks}
 
-教育背景：
+作者教育背景：
 ${educationInfo}
       `.trim(),
       source: "constants.ts (PROFILE, SOCIALS, EDUCATION)",
@@ -153,16 +150,16 @@ ${educationInfo}
     
     const skillsDoc: Document = {
       id: "skills-stack",
-      title: "技能栈 / 技术栈",
+      title: "作者技能栈 / 技术栈",
       description: "作者掌握的编程语言、框架和工具",
       text: `
-技能栈列表：
+作者技能栈列表：
 
 ${skillsText}
 
-完整技能列表：${skillsList.join("、")}
+作者完整技能列表：${skillsList.join("、")}
 
-总共掌握 ${SKILLS.length} 项技能。
+作者总共掌握 ${SKILLS.length} 项技能。
       `.trim(),
       source: "constants.ts (SKILLS)",
     };
