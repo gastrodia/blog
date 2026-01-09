@@ -23,43 +23,63 @@ interface ChatRequest {
 interface SearchResult {
   title: string;
   source: string;
+  description: string;
   text: string;
   similarity: number;
 }
 
-// 将问题转换为向量
+// 将问题转换为向量（与索引时使用相同的模型）
 async function getQueryEmbedding(
   geminiKey: string,
   query: string
 ): Promise<number[]> {
+  console.log(`🔍 正在将问题转换为向量: "${query.substring(0, 50)}${query.length > 50 ? '...' : ''}"`);
   const genAI = new GoogleGenerativeAI(geminiKey);
   const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
   const result = await model.embedContent(query);
+  console.log(`✅ 向量维度: ${result.embedding.values.length}`);
   return result.embedding.values;
 }
 
-// 向量搜索相似文档
+// 向量搜索相似文档（优化：进一步降低阈值）
 async function searchSimilarDocs(
   embedding: number[],
-  topK: number = 3
+  topK: number = 5, // 返回前5个结果
+  minSimilarity: number = 0.25 // 进一步降低阈值到0.25（25%）
 ): Promise<SearchResult[]> {
   const embeddingString = JSON.stringify(embedding);
 
-  const results = await sql`
+  // 先获取所有结果看看相似度分布
+  const allResults = await sql`
     SELECT 
       title, 
       source, 
       text,
+      description,
       1 - (embedding <=> ${embeddingString}::vector) as similarity
     FROM blog_embeddings
     ORDER BY embedding <=> ${embeddingString}::vector
-    LIMIT ${topK}
+    LIMIT 10
   `;
 
-  return results.rows.map((row) => ({
+  // 打印前10个结果的相似度，用于调试
+  console.log("📊 相似度排名（前10）:");
+  allResults.rows.forEach((row, idx) => {
+    console.log(`  ${idx + 1}. ${row.title}: ${((row.similarity as number) * 100).toFixed(2)}%`);
+  });
+
+  // 过滤出符合阈值的结果
+  const filteredResults = allResults.rows
+    .filter((row) => (row.similarity as number) >= minSimilarity)
+    .slice(0, topK);
+
+  console.log(`✅ 返回 ${filteredResults.length} 个结果（相似度 >= ${minSimilarity * 100}%）`);
+
+  return filteredResults.map((row) => ({
     title: row.title as string,
     source: row.source as string,
-    text: (row.text as string).substring(0, 1500), // 限制长度
+    description: (row.description as string) || "",
+    text: (row.text as string).substring(0, 2000), // 增加长度到2000
     similarity: row.similarity as number,
   }));
 }
@@ -70,24 +90,58 @@ function buildPrompt(
   context: SearchResult[],
   history?: ChatMessage[]
 ): { system: string; messages: { role: string; content: string }[] } {
-  // 系统提示词
-  const systemPrompt = `你是 Code_You 博客的智能助手，专门回答关于博客内容的问题。
+  // 系统提示词 - 优化：平衡准确性和可用性
+  const systemPrompt = `你是 Code_You 博客的智能助手，专门回答关于博客内容和作者信息的问题。
 
-**你的职责：**
-1. 基于提供的博客文档内容准确回答问题
-2. 如果文档中没有相关信息，诚实告知用户
-3. 回答要简洁、有帮助、友好
-4. 可以适当结合上下文对话历史
-5. 使用中文回答
+**交互原则：**
+1. 【智能识别意图】
+   - 如果是简单问候（如"你好"、"在吗"），友好回应并简短引导
+   - 如果是感谢/告别，自然礼貌回应
+   - 如果是关于博客/作者的实际问题，基于文档认真详细回答
 
-**注意事项：**
-- 不要编造不存在的内容
-- 如果不确定，建议用户查看原文
-- 回答时可以引用文档标题`;
+2. 【回答实际问题时的核心原则】
+   - ✅ **优先使用文档内容**：文档中的信息一定要回答
+   - ✅ **理解语义相关性**：即使问法不同，只要文档内容相关就要回答
+   - ✅ **完整提取信息**：从文档中提取所有相关信息进行回答
+   - ✅ **自然融入来源**：用口语化方式提及来源，如"根据资料..."、"作者介绍..."
+   - ⚠️ **只在真正没有相关内容时**才说"文档中没有提到"
 
-  // 构建上下文文本
+3. 【语义理解要求】（重要！）
+   - "关于作者的信息" = 作者简介、个人信息、教育背景、联系方式等
+   - "技能栈/技术栈" = 掌握的编程语言、框架、工具等
+   - "项目/作品集/开发项目" = 实际开发的项目作品（不是博客文章！）
+   - "博客文章/文章" = 发表的文章内容（不是项目作品！）
+   - **问题和文档标题不完全一致是正常的**，要理解语义相关性
+   - **重要区分**：项目作品 ≠ 博客文章，要根据文档类型准确回答
+
+4. 【回答风格要求】
+   - 对问候/闲聊：简短自然
+   - 对实际问题：**详细全面**，把文档中的相关信息都整理出来
+   - 保持友好、专业、自然的语气
+   - 使用中文回答
+
+**引用来源的正确方式：**
+✅ "根据资料显示..."
+✅ "作者的信息是..."  
+✅ "从介绍中可以看到..."
+✅ 或者直接回答内容
+
+**重要提醒：**
+✅ 如果文档中有相关信息，**一定要回答**，不要因为措辞不同就说没有
+✅ 从文档中提取信息时要**完整全面**，不要遗漏重要内容
+❌ 不要添加文档中完全没有的信息
+❌ 不要使用生硬的格式标注`;
+
+  // 构建上下文文本（包含标题、描述和正文）
   const contextText = context
-    .map((doc, idx) => `【文档 ${idx + 1}：${doc.title}】\n${doc.text}`)
+    .map((doc, idx) => {
+      const parts = [`【文档 ${idx + 1}：${doc.title}】`];
+      if (doc.description) {
+        parts.push(`简介：${doc.description}`);
+      }
+      parts.push(`\n${doc.text}`);
+      return parts.join("\n");
+    })
     .join("\n\n---\n\n");
 
   // 构建消息历史
@@ -104,16 +158,26 @@ function buildPrompt(
     });
   }
 
-  // 添加当前问题
+  // 添加当前问题 - 优化指引
   messages.push({
     role: "user",
-    content: `基于以下博客内容回答我的问题：
+    content: `${contextText ? `===== 检索到的相关文档 =====\n${contextText}\n===== 文档结束 =====\n\n` : ''}【用户问题】${question}
 
-${contextText}
-
----
-
-我的问题：${question}`,
+【回答指引】
+- 如果是问候/闲聊：自然友好地回应
+- 如果是实际问题：
+  * ✅ **仔细阅读上述文档**，理解问题和文档内容的语义关联
+  * ✅ **如果文档中有相关信息，一定要详细回答**，不要因为措辞不同就说没有
+  * ✅ **重要区分**：
+    - 问"项目/作品"时 → 找标注为"开发项目"的文档，不要回答博客文章
+    - 问"博客/文章"时 → 找标注为"博客文章"的文档，不要回答项目
+  * ✅ 例如：问"关于作者的信息"时，【关于作者个人信息】文档就是相关的
+  * ✅ 例如：问"有哪些项目"时，【开发项目列表】文档才是答案，不是博客文章标题
+  * ✅ 从文档中提取完整信息，用自然流畅的语言表达
+  * ✅ 可以说"根据资料..."、"作者介绍..."等自然引导
+  * ❌ 只有文档内容**完全无关**时才说"文档中没有提到"
+  * ❌ 不要添加文档中没有的信息
+  * ❌ 不要混淆项目和博客文章`,
   });
 
   return { system: systemPrompt, messages };
@@ -211,12 +275,18 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // 2. 搜索相似文档
+    // 2. 搜索相似文档（使用优化后的阈值）
     let similarDocs: SearchResult[];
     try {
-      similarDocs = await searchSimilarDocs(queryEmbedding, 3);
+      // 使用默认参数：topK=5, minSimilarity=0.3
+      similarDocs = await searchSimilarDocs(queryEmbedding);
+      console.log(`✅ 找到 ${similarDocs.length} 个相关文档`);
+      if (similarDocs.length > 0) {
+        console.log("📄 相关文档:", 
+          similarDocs.map(d => `${d.title} (${(d.similarity * 100).toFixed(1)}%)`).join(", "));
+      }
     } catch (error) {
-      console.error("搜索文档失败:", error);
+      console.error("❌ 搜索文档失败:", error);
       return new Response(
         JSON.stringify({ error: "搜索相关内容时出错，请稍后重试" }),
         {
@@ -226,24 +296,15 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // 如果没有找到相关内容
-    if (similarDocs.length === 0) {
-      const fallbackResponse = JSON.stringify({
-        type: "message",
-        content: "抱歉，我在博客中没有找到相关的内容来回答你的问题。你可以尝试换个方式提问，或者直接浏览博客文章。",
-        sources: [],
-      });
+    // 如果没有找到相关内容，让模型自己回答（可能是问候或无关问题）
+    // 不立即返回，而是传递空上下文让模型处理
+    console.log(similarDocs.length === 0 ? '未找到相关文档，让模型自由回答' : `找到 ${similarDocs.length} 个相关文档`);
 
-      return new Response(fallbackResponse, {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // 3. 构建 Prompt
+    // 3. 构建 Prompt（即使没有文档也继续，让模型处理问候等情况）
     let promptData: { system: string; messages: { role: string; content: string }[] };
     try {
-      promptData = buildPrompt(message, similarDocs, history);
+      // 如果没有文档，传递空数组
+      promptData = buildPrompt(message, similarDocs.length > 0 ? similarDocs : [], history);
     } catch (error) {
       console.error("构建 Prompt 失败:", error);
       return new Response(
@@ -269,8 +330,9 @@ export const POST: APIRoute = async ({ request }) => {
           })),
         ],
         model: "llama-3.3-70b-versatile",
-        temperature: 0.7,
+        temperature: 0.3, // 降低温度以减少幻觉（从 0.7 降至 0.3）
         max_tokens: 1024,
+        top_p: 0.9, // 添加 top_p 以进一步控制随机性
         stream: true, // 启用流式响应
       });
     } catch (error) {
@@ -291,16 +353,18 @@ export const POST: APIRoute = async ({ request }) => {
     const readable = new ReadableStream({
       async start(controller) {
         try {
-          // 先发送数据来源
-          const sourcesData = JSON.stringify({
-            type: "sources",
-            sources: similarDocs.map((doc) => ({
-              title: doc.title,
-              source: doc.source,
-              similarity: Math.round(doc.similarity * 100),
-            })),
-          });
-          controller.enqueue(encoder.encode(`data: ${sourcesData}\n\n`));
+          // 先发送数据来源（只有找到文档时才发送）
+          if (similarDocs.length > 0) {
+            const sourcesData = JSON.stringify({
+              type: "sources",
+              sources: similarDocs.map((doc) => ({
+                title: doc.title,
+                source: doc.source,
+                similarity: Math.round(doc.similarity * 100),
+              })),
+            });
+            controller.enqueue(encoder.encode(`data: ${sourcesData}\n\n`));
+          }
 
           // 流式发送 AI 回复
           for await (const chunk of stream) {

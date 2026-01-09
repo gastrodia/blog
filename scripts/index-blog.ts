@@ -92,98 +92,221 @@ async function loadSiteConfigDocuments(): Promise<Document[]> {
     const EDUCATION = constantsModule.EDUCATION;
     const PROJECTS = constantsModule.PROJECTS;
 
-    // 1. 网站基本信息文档
+    // 1. 网站基本信息文档（优化：增加问答形式和关键词）
     const siteInfoDoc: Document = {
       id: "site-config",
-      title: "网站基本信息",
-      description: `关于 ${SITE.title} 博客网站的基本配置和信息`,
+      title: "网站基本信息和配置",
+      description: `${SITE.title} 博客网站的基本配置、网站功能、主题设置、显示选项等信息`,
       text: `
-网站名称：${SITE.title}
-作者：${SITE.author}
-网站地址：${SITE.website}
-个人主页：${SITE.profile}
-网站描述：${SITE.desc}
-语言：${SITE.lang}
-时区：${SITE.timezone}
-方向：${SITE.dir}
+# 网站基本信息
 
-网站功能：
-- ${SITE.lightAndDarkMode ? '支持' : '不支持'}亮色/暗色主题切换
-- 每页显示 ${SITE.postPerPage} 篇文章
-- 首页显示 ${SITE.postPerIndex} 篇文章
-- ${SITE.showArchives ? '支持' : '不支持'}文章归档
-- ${SITE.showBackButton ? '显示' : '不显示'}返回按钮
-- ${SITE.editPost.enabled ? `支持编辑页面功能（${SITE.editPost.text}）` : '不支持编辑页面'}
-- ${SITE.dynamicOgImage ? '支持' : '不支持'}动态 OG 图片生成
+## 关于这个博客网站
+这是 ${SITE.author} 的个人博客网站。
+
+网站名称：${SITE.title}
+网站作者：${SITE.author}
+网站地址：${SITE.website}
+个人主页链接：${SITE.profile}
+网站介绍：${SITE.desc}
+网站语言：${SITE.lang}
+时区设置：${SITE.timezone}
+阅读方向：${SITE.dir}
+
+## 网站功能特性
+- 主题模式：${SITE.lightAndDarkMode ? '支持亮色/暗色主题切换，可以在明暗模式间自由切换' : '不支持主题切换'}
+- 分页设置：每页显示 ${SITE.postPerPage} 篇文章
+- 首页文章：首页展示 ${SITE.postPerIndex} 篇文章
+- 文章归档：${SITE.showArchives ? '提供文章归档页面，可以按时间查看所有文章' : '不提供文章归档'}
+- 导航按钮：${SITE.showBackButton ? '显示返回按钮，方便导航' : '不显示返回按钮'}
+- 编辑功能：${SITE.editPost.enabled ? `支持在线编辑页面（编辑按钮文本：${SITE.editPost.text}）` : '不支持在线编辑'}
+- OG 图片：${SITE.dynamicOgImage ? '支持动态生成 Open Graph 社交媒体预览图片' : '不支持动态 OG 图片'}
+
+## 常见问题
+Q: 这个网站是谁的博客？
+A: 这是 ${SITE.author} 的个人博客网站。
+
+Q: 网站地址是什么？
+A: ${SITE.website}
+
+Q: 网站支持哪些功能？
+A: 支持文章发布、${SITE.lightAndDarkMode ? '主题切换、' : ''}${SITE.showArchives ? '文章归档、' : ''}分页浏览等功能。
       `.trim(),
       source: "config.ts",
     };
 
-    // 2. 作者信息文档
+    // 2. 作者信息文档（优化：强化"关于作者"关键词）
     const socialLinks = SOCIALS.map((s: typeof SOCIALS[0]) => `- ${s.name}: ${s.href}`).join('\n');
     const educationInfo = EDUCATION.map((edu: typeof EDUCATION[0]) => 
-      `学校：${edu.school}\n时间：${edu.start} - ${edu.end}\n描述：${edu.description}`
-    ).join('\n\n');
+      `- ${edu.school}（${edu.start} - ${edu.end}）\n  ${edu.description}`
+    ).join('\n');
     
     const authorDoc: Document = {
       id: "author-profile",
-      title: "关于作者 / 笔者信息",
-      description: `${SITE.author} 的个人简介和联系方式`,
+      title: "关于作者的信息和个人简介",
+      description: `关于作者 ${SITE.author} 的详细信息：个人介绍、职业背景、教育经历、联系方式、社交媒体账号`,
       text: `
-关于作者：
+# 关于作者的信息
+# 关于 ${SITE.author} 的个人简介
+
+## 个人简介
 ${PROFILE.aboutMe.replace(/<\/?mark>/g, '')}
 
-作者职位：${PROFILE.synopsis}
+## 职业信息
+当前职位：${PROFILE.synopsis}
+在线简历地址：${PROFILE.resume}
+简历文件：${PROFILE.resumeName}
+个人头像：${PROFILE.avatar}
 
-作者联系方式：
+## 联系方式和社交媒体
+如何联系 ${SITE.author}？可以通过以下方式：
 ${socialLinks}
 
-作者教育背景：
+## 教育背景
+${SITE.author} 的教育经历：
 ${educationInfo}
+
+## 常见问题
+
+Q: 关于作者的信息有哪些？
+A: 关于作者 ${SITE.author} 的信息包括：职业是 ${PROFILE.synopsis}，教育背景是 ${EDUCATION.map((edu: typeof EDUCATION[0]) => edu.school).join('、')}，可以通过 ${SOCIALS.map((s: typeof SOCIALS[0]) => s.name).join('、')} 联系。
+
+Q: 作者是谁？
+A: 作者是 ${SITE.author}，职业：${PROFILE.synopsis}
+
+Q: 如何联系作者？
+A: 可以通过 ${SOCIALS.map((s: typeof SOCIALS[0]) => s.name).join('、')} 等方式联系作者。
+
+Q: 作者的教育背景如何？
+A: 作者毕业于 ${EDUCATION.map((edu: typeof EDUCATION[0]) => edu.school).join('、')}。
+
+Q: 在哪里可以看到作者的简历？
+A: 作者的在线简历：${PROFILE.resume}
+
+Q: 告诉我关于作者的详细信息？
+A: 关于作者的详细信息：${SITE.author} 是一位 ${PROFILE.synopsis}，毕业于 ${EDUCATION.map((edu: typeof EDUCATION[0]) => edu.school).join('、')}，联系方式包括 ${SOCIALS.slice(0, 2).map((s: typeof SOCIALS[0]) => s.name).join('和')}。
+
+关键词：关于作者、作者信息、作者简介、个人资料、联系作者、author profile、about me
       `.trim(),
       source: "constants.ts (PROFILE, SOCIALS, EDUCATION)",
     };
 
-    // 3. 技能栈文档
+    // 3. 技能栈文档（优化：大幅增加关键词和问答）
     const skillsList = SKILLS.map((s: typeof SKILLS[0]) => s.name);
-    const skillsText = SKILLS.map((s: typeof SKILLS[0]) => `- ${s.name} (logo: ${s.logo})`).join('\n');
+    const skillsText = SKILLS.map((s: typeof SKILLS[0]) => `- ${s.name}`).join('\n');
     
     const skillsDoc: Document = {
       id: "skills-stack",
-      title: "作者技能栈 / 技术栈",
-      description: "作者掌握的编程语言、框架和工具",
+      title: "技能栈技术栈编程技能",
+      description: `${SITE.author} 掌握的技能栈、技术栈、编程语言、开发框架、工具链、技术能力清单`,
       text: `
-作者技能栈列表：
+# 技能栈 | 技术栈 | 编程技能
 
+## ${SITE.author} 掌握的技能和技术
+
+### 完整技能列表
 ${skillsText}
 
-作者完整技能列表：${skillsList.join("、")}
+### 技能统计
+- 总计掌握 ${SKILLS.length} 项技术技能
+- 技能类型包括：编程语言、开发框架、工具链、数据库等
+- 完整技能：${skillsList.join("、")}
 
-作者总共掌握 ${SKILLS.length} 项技能。
+### 技术栈详情
+${SKILLS.map((s: typeof SKILLS[0], idx: number) => `${idx + 1}. ${s.name}`).join('\n')}
+
+## 常见问题
+
+Q: ${SITE.author} 会哪些编程语言？
+A: ${SITE.author} 掌握的编程语言和技术包括：${skillsList.join("、")}等 ${SKILLS.length} 项技能。
+
+Q: 技能栈有哪些？
+A: 完整技能栈列表：${skillsList.join("、")}。
+
+Q: 掌握什么技术？
+A: 掌握的技术栈包括：${skillsList.join("、")}。
+
+Q: 会使用哪些框架和工具？
+A: 技术栈涵盖了编程语言、框架和工具，包括 ${skillsList.slice(0, Math.min(5, skillsList.length)).join("、")}${skillsList.length > 5 ? '等' : ''}。
+
+Q: 技术能力如何？
+A: ${SITE.author} 掌握 ${SKILLS.length} 项技术技能，包括${skillsList.slice(0, 3).join("、")}等多种编程语言和框架。
+
+关键词：技能栈、技术栈、编程语言、开发框架、技术能力、programming skills、tech stack、技术清单
       `.trim(),
       source: "constants.ts (SKILLS)",
     };
 
-    // 4. 项目文档
+    // 4. 项目文档（强化优化：明确区分项目和博客）
     const projectsText = PROJECTS.map((proj: typeof PROJECTS[0], index: number) => `
-${index + 1}. ${proj.title}
-   - 地址: ${proj.href}
-   - 技术: ${proj.tags}
-   - 描述: ${proj.desc}
-   - GitHub: ${proj.github}
-   - 状态: ${proj.wip ? '进行中 (WIP)' : '已完成'}
+### 项目 ${index + 1}：${proj.title}
+- 项目名称：${proj.title}
+- 项目链接：${proj.href}
+- 技术栈：${proj.tags}
+- 项目简介：${proj.desc}
+- GitHub 地址：${proj.github}
+- 开发状态：${proj.wip ? '正在开发中 (Work In Progress)' : '已完成上线'}
     `.trim()).join('\n\n');
+    
+    const completedProjects = PROJECTS.filter((p: typeof PROJECTS[0]) => !p.wip);
+    const wipProjects = PROJECTS.filter((p: typeof PROJECTS[0]) => p.wip);
+    const projectNames = PROJECTS.map((p: typeof PROJECTS[0]) => p.title);
     
     const projectsDoc: Document = {
       id: "projects-list",
-      title: "项目列表 / 作品集",
-      description: "作者的个人项目和开源作品",
+      title: "开发项目列表和作品集",
+      description: `${SITE.author} 的开发项目、实际项目、作品集、个人作品、开源项目、项目经验（不是博客文章）`,
       text: `
-个人项目：
+# 开发项目列表和作品集
+# ${SITE.author} 的实际开发项目和个人作品
+## 注意：这里是开发项目，不是博客文章
 
 ${projectsText}
 
-总共 ${PROJECTS.length} 个项目，其中 ${PROJECTS.filter((p: typeof PROJECTS[0]) => p.wip).length} 个正在进行中。
+## 开发项目统计数据
+- 开发项目总数：${PROJECTS.length} 个实际项目
+- 已完成的项目：${completedProjects.length} 个
+- 正在开发的项目：${wipProjects.length} 个
+- 完整项目列表：${projectNames.join("、")}
+- 重要提示：这些是实际的开发项目和作品，不是博客文章
+
+## 已完成并上线的项目
+${completedProjects.length > 0 ? completedProjects.map((p: typeof PROJECTS[0]) => `- 项目《${p.title}》：${p.desc} (${p.href})`).join('\n') : '暂无'}
+
+## 正在开发中的项目
+${wipProjects.length > 0 ? wipProjects.map((p: typeof PROJECTS[0]) => `- 项目《${p.title}》：${p.desc} (开发中)`).join('\n') : '暂无'}
+
+## 常见问题（关于开发项目）
+
+Q: 有哪些项目？
+A: ${SITE.author} 开发了 ${PROJECTS.length} 个实际项目，分别是：${projectNames.join("、")}。这些是实际的开发项目作品，不是博客文章。
+
+Q: 开发过哪些项目？
+A: 开发的项目包括：${projectNames.join("、")}，共 ${PROJECTS.length} 个实际开发项目。
+
+Q: 作品集有哪些项目？
+A: 作品集中的开发项目有：${projectNames.join("、")}，总共 ${PROJECTS.length} 个项目作品。
+
+Q: 做过什么实际项目？
+A: 实际开发的项目作品有：${projectNames.join("、")}。
+
+Q: 项目作品有哪些？
+A: 项目作品包括 ${PROJECTS.length} 个：${projectNames.join("、")}。
+
+Q: 有哪些开源项目作品？
+A: GitHub 上的开源项目作品包括：${PROJECTS.filter((p: typeof PROJECTS[0]) => p.github).map((p: typeof PROJECTS[0]) => p.title).join("、")}。
+
+Q: 这些项目使用了什么技术？
+A: 项目开发使用的技术栈包括：${[...new Set(PROJECTS.flatMap((p: typeof PROJECTS[0]) => p.tags.split(/[,，、]/).map((t: string) => t.trim())))].join("、")}等技术。
+
+Q: 项目列表是什么？
+A: 项目列表共有 ${PROJECTS.length} 个开发项目：${projectNames.join("、")}。
+
+重要说明：
+- 这是实际的开发项目列表，不是博客文章
+- 每个项目都有对应的项目地址和 GitHub 仓库
+- 项目作品展示了实际的开发能力和技术栈
+
+关键词：开发项目、实际项目、项目列表、作品集、个人作品、开源项目、项目经验、项目作品、portfolio、projects、实战项目、上线项目
       `.trim(),
       source: "constants.ts (PROJECTS)",
     };
@@ -192,7 +315,9 @@ ${projectsText}
     console.log(`✅ 共加载 ${documents.length} 个网站配置文档`);
     
     for (const doc of documents) {
-      console.log(`📄 加载: ${doc.id} - ${doc.title}`);
+      console.log(`📄 加载配置: ${doc.id} - ${doc.title}`);
+      console.log(`   描述: ${doc.description.substring(0, 60)}...`);
+      console.log(`   文本长度: ${doc.text.length} 字符`);
     }
 
     return documents;
@@ -231,16 +356,17 @@ async function loadDocuments(): Promise<Document[]> {
           continue;
         }
 
+        // 在标题和描述中明确标注这是博客文章，帮助区分项目
         const document: Document = {
           id: file,
-          title: frontmatter.title,
-          description: frontmatter.description || "", // 确保不会是 undefined
-          text: content, // gray-matter 自动去除了 frontmatter
+          title: `博客文章：${frontmatter.title}`,
+          description: `这是一篇博客文章（不是项目）：${frontmatter.description || ""}`,
+          text: `这是一篇博客文章的内容：\n\n${content}`, // 明确标注是博客文章
           source: file,
         };
 
         documents.push(document);
-        console.log(`📄 加载: ${file}`);
+        console.log(`📄 加载博客: ${file}`);
         console.log(`   标题: ${frontmatter.title}`);
         console.log(`   描述: ${frontmatter.description?.substring(0, 50)}...`);
       }
