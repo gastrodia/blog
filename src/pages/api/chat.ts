@@ -18,6 +18,8 @@ interface ChatMessage {
 interface ChatRequest {
   message: string;
   history?: ChatMessage[];
+  mode?: "chat" | "summary";
+  postId?: string;
 }
 
 interface SearchResult {
@@ -82,6 +84,31 @@ async function searchSimilarDocs(
     text: (row.text as string).substring(0, 2000), // 增加长度到2000
     similarity: row.similarity as number,
   }));
+}
+
+function truncateForSummary(text: string, maxChars: number = 16000): string {
+  if (text.length <= maxChars) return text;
+  const head = text.slice(0, Math.floor(maxChars * 0.75));
+  const tail = text.slice(-Math.floor(maxChars * 0.25));
+  return `${head}\n\n...[内容过长，已截断]...\n\n${tail}`;
+}
+
+async function getDocById(id: string) {
+  const rows = await sql`
+    SELECT id, title, source, description, text
+    FROM blog_embeddings
+    WHERE id = ${id}
+    LIMIT 1
+  `;
+  return rows.rows?.[0] as
+    | {
+        id: string;
+        title: string;
+        source: string;
+        description: string | null;
+        text: string;
+      }
+    | undefined;
 }
 
 // 构建 Prompt（包含历史上下文）
@@ -228,7 +255,7 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    const { message, history } = body;
+    const { message, history, mode = "chat", postId } = body;
 
     if (!message || typeof message !== "string") {
       return new Response(JSON.stringify({ error: "缺少消息内容" }), {
@@ -242,23 +269,108 @@ export const POST: APIRoute = async ({ request }) => {
     const GROQ_API_KEY = import.meta.env.GROQ_API_KEY;
     const POSTGRES_URL = import.meta.env.POSTGRES_URL;
 
-    if (!GEMINI_API_KEY || !GROQ_API_KEY || !POSTGRES_URL) {
+    // summary 模式不需要 Gemini embedding，但需要 Groq + Postgres
+    const hasRequiredEnv =
+      mode === "summary"
+        ? !!GROQ_API_KEY && !!POSTGRES_URL
+        : !!GEMINI_API_KEY && !!GROQ_API_KEY && !!POSTGRES_URL;
+
+    if (!hasRequiredEnv) {
       console.error("环境变量未配置:", {
+        mode,
         hasGemini: !!GEMINI_API_KEY,
         hasGroq: !!GROQ_API_KEY,
         hasPostgres: !!POSTGRES_URL,
       });
-      return new Response(
-        JSON.stringify({ error: "服务配置错误，请联系管理员" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      return new Response(JSON.stringify({ error: "服务配置错误，请联系管理员" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     // 设置 POSTGRES_URL 到 process.env（@vercel/postgres 需要）
     process.env.POSTGRES_URL = POSTGRES_URL;
+
+    // ========== 文章总结模式：按 id 取全文，直接总结（不走 RAG） ==========
+    if (mode === "summary") {
+      if (!postId || typeof postId !== "string") {
+        return new Response(JSON.stringify({ error: "缺少 postId，无法总结文章" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      const doc = await getDocById(postId);
+      if (!doc) {
+        return new Response(JSON.stringify({ error: `未找到文章内容（id=${postId}）` }), {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      const summarySystemPrompt = `你是 Code_You 博客的智能助手。请用中文对“当前文章”做一个结构化总结。
+
+要求：
+- 先给 1 句 TL;DR
+- 再给 5-10 条要点（用列表）
+- 如果文章包含代码/步骤/结论，请提炼关键点
+- 如果是代码/教程类文章：可以给出 1-3 段“核心代码片段”（尽量短小、关键、可复制），不要粘贴大段无关代码
+- 不要编造文章中不存在的信息
+- 输出尽量精炼但覆盖主要内容`;
+
+      const articleText = truncateForSummary(doc.text, 16000);
+      const summaryUserPrompt = `【文章标题】${doc.title}
+${doc.description ? `【文章简介】${doc.description}\n` : ""}【文章正文】
+${articleText}`;
+
+      const groq = new Groq({ apiKey: GROQ_API_KEY! });
+      const stream = await groq.chat.completions.create({
+        messages: [
+          { role: "system", content: summarySystemPrompt },
+          { role: "user", content: summaryUserPrompt },
+        ],
+        model: "llama-3.3-70b-versatile",
+        temperature: 0.2,
+        max_tokens: 1024,
+        top_p: 0.9,
+        stream: true,
+      });
+
+      const encoder = new TextEncoder();
+      const readable = new ReadableStream({
+        async start(controller) {
+          try {
+            for await (const chunk of stream) {
+              const content = chunk.choices[0]?.delta?.content || "";
+              if (content) {
+                const data = JSON.stringify({ type: "content", content });
+                controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+              }
+            }
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ type: "done" })}\n\n`)
+            );
+            controller.close();
+          } catch (error) {
+            console.error("Summary stream error:", error);
+            const errorData = JSON.stringify({
+              type: "error",
+              error: "生成总结时出错",
+            });
+            controller.enqueue(encoder.encode(`data: ${errorData}\n\n`));
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(readable, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+        },
+      });
+    }
 
     // 1. 将问题转为向量
     let queryEmbedding: number[];

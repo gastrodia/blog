@@ -358,7 +358,7 @@ async function loadDocuments(): Promise<Document[]> {
 
         // 在标题和描述中明确标注这是博客文章，帮助区分项目
         const document: Document = {
-          id: file,
+          id: file.replace(/\.mdx?$/, ''),
           title: `博客文章：${frontmatter.title}`,
           description: `这是一篇博客文章（不是项目）：${frontmatter.description || ""}`,
           text: `这是一篇博客文章的内容：\n\n${content}`, // 明确标注是博客文章

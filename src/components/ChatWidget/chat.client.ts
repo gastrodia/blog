@@ -20,6 +20,7 @@ interface ChatState {
 
 const STORAGE_KEY = "blog-chat-history";
 const MAX_MESSAGES = 50; // 最多保存 50 条消息
+type ChatMode = "chat" | "summary";
 
 class ChatWidget {
   private state: ChatState;
@@ -72,6 +73,7 @@ class ChatWidget {
     this.bindEvents();
     this.eventsBound = true;
     
+    this.updateInputPlaceholder();
     this.renderMessages();
   }
   
@@ -123,6 +125,7 @@ class ChatWidget {
     // 重新绑定事件
     this.rebindButtonEvents();
     
+    this.updateInputPlaceholder();
     // 重新渲染消息
     this.renderMessages();
     
@@ -304,6 +307,24 @@ class ChatWidget {
     }
   }
 
+  private getCurrentPostId(): string | null {
+    // 文章链接形如：/posts/p28
+    const pathname = window.location?.pathname || "";
+    const m = pathname.match(/^\/posts\/p(\d+)(?:\/)?$/);
+    return m?.[1] || null;
+  }
+
+  private isPostPage(): boolean {
+    return this.getCurrentPostId() !== null;
+  }
+
+  private updateInputPlaceholder() {
+    if (!this.elements.input) return;
+    this.elements.input.placeholder = this.isPostPage()
+      ? "问我关于当前文章的问题，或点击下方总结..."
+      : "问我关于博客的问题...";
+  }
+
   // 打开/关闭聊天
   private toggleChat() {
     // 防止动画进行中的重复点击
@@ -400,7 +421,7 @@ class ChatWidget {
 
     try {
       // 调用 API（流式响应）
-      await this.streamChatResponse(message);
+      await this.streamChatResponse(message, { mode: "chat" });
     } catch (error) {
       console.error("发送消息失败:", error);
       this.addErrorMessage("抱歉，发送消息时出错了，请稍后再试。");
@@ -411,15 +432,24 @@ class ChatWidget {
   }
 
   // 流式调用 API
-  private async streamChatResponse(message: string) {
+  private async streamChatResponse(
+    message: string,
+    opts?: { mode?: ChatMode; postId?: string }
+  ) {
+    const mode: ChatMode = opts?.mode || "chat";
+    const postId = opts?.postId;
+
     // 过滤掉错误消息，只保留有效的对话历史
-    const validHistory = this.state.messages
-      .filter((msg) => !msg.content.startsWith("❌")) // 过滤错误消息
-      .slice(-10) // 只取最近 10 条
-      .map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-      }));
+    const validHistory =
+      mode === "summary"
+        ? []
+        : this.state.messages
+            .filter((msg) => !msg.content.startsWith("❌")) // 过滤错误消息
+            .slice(-10) // 只取最近 10 条
+            .map((msg) => ({
+              role: msg.role,
+              content: msg.content,
+            }));
 
     const response = await fetch("/api/chat", {
       method: "POST",
@@ -427,6 +457,8 @@ class ChatWidget {
       body: JSON.stringify({
         message,
         history: validHistory,
+        mode,
+        postId,
       }),
     });
 
@@ -595,15 +627,27 @@ class ChatWidget {
 
     if (this.state.messages.length === 0) {
       // 显示欢迎消息
+      const postId = this.getCurrentPostId();
+      const isPostPage = postId !== null;
       this.elements.messagesList.innerHTML = `
         <div class="text-center py-8 px-4 text-foreground">
           <div class="welcome-icon text-5xl mb-4 animate-wave">👋</div>
           <h3 class="m-0 mb-2 text-xl text-foreground">你好！我是${this.state.name}</h3>
-          <p class="m-0 mb-6 text-foreground opacity-70">你可以问我关于博客内容的任何问题</p>
+          <p class="m-0 mb-6 text-foreground opacity-70">${
+            isPostPage
+              ? "你可以问我关于当前文章的问题，或一键总结全文"
+              : "你可以问我关于博客内容的任何问题"
+          }</p>
           <div class="flex flex-col gap-2 mt-4">
-            <button class="quick-btn px-4 py-3 bg-muted border border-border rounded-lg cursor-pointer transition-all text-foreground text-sm text-left hover:bg-accent hover:text-background hover:border-accent" data-question="作者的技能栈有哪些？">💼 技能栈</button>
-            <button class="quick-btn px-4 py-3 bg-muted border border-border rounded-lg cursor-pointer transition-all text-foreground text-sm text-left hover:bg-accent hover:text-background hover:border-accent" data-question="有哪些项目？">🚀 项目</button>
-            <button class="quick-btn px-4 py-3 bg-muted border border-border rounded-lg cursor-pointer transition-all text-foreground text-sm text-left hover:bg-accent hover:text-background hover:border-accent" data-question="关于作者的信息？"> ✍ 笔者信息</button>
+            ${
+              isPostPage
+                ? `<button class="quick-btn px-4 py-3 bg-muted border border-border rounded-lg cursor-pointer transition-all text-foreground text-sm text-left hover:bg-accent hover:text-background hover:border-accent" data-action="summary" data-post-id="${postId}">📝 总结当前文章</button>`
+                : `
+                  <button class="quick-btn px-4 py-3 bg-muted border border-border rounded-lg cursor-pointer transition-all text-foreground text-sm text-left hover:bg-accent hover:text-background hover:border-accent" data-question="作者的技能栈有哪些？">💼 技能栈</button>
+                  <button class="quick-btn px-4 py-3 bg-muted border border-border rounded-lg cursor-pointer transition-all text-foreground text-sm text-left hover:bg-accent hover:text-background hover:border-accent" data-question="有哪些项目？">🚀 项目</button>
+                  <button class="quick-btn px-4 py-3 bg-muted border border-border rounded-lg cursor-pointer transition-all text-foreground text-sm text-left hover:bg-accent hover:text-background hover:border-accent" data-question="关于作者的信息？"> ✍ 笔者信息</button>
+                `
+            }
           </div>
         </div>
       `;
@@ -613,7 +657,15 @@ class ChatWidget {
         .querySelectorAll(".quick-btn")
         .forEach((btn) => {
           btn.addEventListener("click", (e) => {
-            const question = (e.target as HTMLElement).dataset.question;
+            const el = e.target as HTMLElement;
+            const action = el.dataset.action;
+            if (action === "summary") {
+              const pid = el.dataset.postId || this.getCurrentPostId();
+              this.sendSummaryOfCurrentPost(pid || undefined);
+              return;
+            }
+
+            const question = el.dataset.question;
             if (question && this.elements.input) {
               this.elements.input.value = question;
               this.sendMessage();
@@ -660,7 +712,7 @@ class ChatWidget {
 
         const contentClass = msg.role === "user" 
           ? "px-4 py-3 rounded-2xl rounded-br-sm bg-accent text-background wrap-break-word leading-relaxed"
-          : "px-4 py-3 rounded-2xl rounded-bl-sm bg-muted text-foreground wrap-break-word leading-relaxed markdown-content";
+          : "px-4 py-3 rounded-2xl rounded-bl-sm bg-muted text-foreground wrap-break-word leading-relaxed chat-md-content";
 
         messageDiv.innerHTML = `
           <div class="${contentClass}">
@@ -679,6 +731,36 @@ class ChatWidget {
     }
 
     this.scrollToBottom();
+  }
+
+  private async sendSummaryOfCurrentPost(postId?: string) {
+    const pid = postId || this.getCurrentPostId();
+    if (!pid) {
+      this.addErrorMessage("当前页面不是文章页，无法总结。");
+      return;
+    }
+    if (this.state.isLoading) return;
+
+    const userMessage: ChatMessage = {
+      role: "user",
+      content: "总结当前文章",
+      timestamp: Date.now(),
+    };
+    this.state.messages.push(userMessage);
+    this.saveHistory();
+    this.renderMessages();
+
+    this.state.isLoading = true;
+    this.addLoadingMessage();
+    try {
+      await this.streamChatResponse("总结当前文章", { mode: "summary", postId: pid });
+    } catch (error) {
+      console.error("总结失败:", error);
+      this.addErrorMessage("抱歉，总结文章时出错了，请稍后再试。");
+    } finally {
+      this.state.isLoading = false;
+      this.removeLoadingMessage();
+    }
   }
 
   // 格式化消息（使用 Marked + Shiki 渲染完整 Markdown）
