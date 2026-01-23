@@ -20,16 +20,119 @@ const { file, fileName } = Astro.props;
   </div>
 </div>
 
+<style is:global>
+  /* PDF 页面容器样式 */
+  .pdf-page {
+    position: relative;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .pdf-page canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* 确保文本层可以选中 */
+  .textLayer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    line-height: 1;
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+  }
+
+  .textLayer > span {
+    color: transparent;
+    position: absolute;
+    white-space: pre;
+    cursor: text;
+    transform-origin: 0% 0%;
+    line-height: 1;
+    display: inline-block;
+    pointer-events: auto;
+  }
+
+  .textLayer ::selection {
+    background: rgba(0, 100, 255, 0.4);
+  }
+
+  /* 调试模式：取消注释以显示文本层 */
+  /* .textLayer > span {
+    color: rgba(255, 0, 0, 0.5) !important;
+  } */
+
+  /* 注释层样式 */
+  .annotationLayer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+  }
+
+  .annotationLayer section {
+    position: absolute;
+    pointer-events: auto;
+  }
+
+  .annotationLayer .linkAnnotation > a,
+  .annotationLayer .buttonWidgetAnnotation.pushButton > a {
+    position: absolute;
+    font-size: 1em;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+
+  .annotationLayer .linkAnnotation > a:hover,
+  .annotationLayer .buttonWidgetAnnotation.pushButton > a:hover {
+    opacity: 0.2;
+    background: rgba(255, 255, 0, 1);
+    box-shadow: 0px 2px 10px rgba(255, 255, 0, 1);
+  }
+
+  /* 其他注释样式 */
+  .annotationLayer .textAnnotation img {
+    cursor: pointer;
+  }
+</style>
+
 <script>
   import * as pdfjsLib from "pdfjs-dist";
   import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from "pdfjs-dist";
 
   const WORKER_SRC = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+  const PDF_VIEWER_CSS = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/web/pdf_viewer.css`;
   const CONTAINER_PADDING = 0;
   const DEFAULT_CONTAINER_WIDTH = 800;
   const RESIZE_DEBOUNCE_DELAY = 300;
 
   pdfjsLib.GlobalWorkerOptions.workerSrc = WORKER_SRC;
+
+  // 动态加载 PDF.js 的 CSS 样式
+  function loadPdfViewerCSS() {
+    const existingLink = document.querySelector('link[href*="pdf_viewer.css"]');
+    if (!existingLink) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = PDF_VIEWER_CSS;
+      document.head.appendChild(link);
+    }
+  }
+
+  // 在初始化时加载 CSS
+  loadPdfViewerCSS();
 
   class PDFViewer {
     private container: HTMLElement | null = null;
@@ -150,14 +253,20 @@ const { file, fileName } = Astro.props;
       if (!this.container) return;
 
       const page = await pdf.getPage(pageNum);
-      const canvas = this.createCanvas(page);
+      const viewport = this.calculateViewport(page);
+      
+      // 创建页面容器
+      const pageContainer = document.createElement("div");
+      pageContainer.className = "pdf-page";
+      pageContainer.style.width = `${viewport.width}px`;
+      pageContainer.style.height = `${viewport.height}px`;
 
+      // 创建并渲染 Canvas
+      const canvas = this.createCanvas();
       if (!canvas) return;
 
       const context = canvas.getContext("2d");
       if (!context) return;
-
-      const viewport = this.calculateViewport(page);
       
       // 获取设备像素比，用于高清屏幕渲染
       const pixelRatio = window.devicePixelRatio || 1;
@@ -176,13 +285,22 @@ const { file, fileName } = Astro.props;
       const renderTask = page.render({
         canvasContext: context,
         viewport: viewport,
-      } as any);
+        canvas: canvas,
+      });
 
       this.currentRenderTasks.push(renderTask);
 
       try {
         await renderTask.promise;
-        targetContainer.appendChild(canvas);
+        pageContainer.appendChild(canvas);
+
+        // 渲染文本层（支持文本选择）
+        await this.renderTextLayer(page, viewport, pageContainer);
+
+        // 渲染注释层（支持链接点击）
+        await this.renderAnnotationLayer(page, viewport, pageContainer);
+
+        targetContainer.appendChild(pageContainer);
       } catch (error) {
         if ((error as Error).name !== "RenderingCancelledException") {
           throw error;
@@ -190,7 +308,132 @@ const { file, fileName } = Astro.props;
       }
     }
 
-    private createCanvas(_page: PDFPageProxy): HTMLCanvasElement {
+    private async renderTextLayer(
+      page: PDFPageProxy,
+      viewport: ReturnType<PDFPageProxy['getViewport']>,
+      pageContainer: HTMLElement
+    ): Promise<void> {
+      try {
+        const textContent = await page.getTextContent();
+        
+        const textLayerDiv = document.createElement("div");
+        textLayerDiv.className = "textLayer";
+
+        // 渲染文本层内容
+        const textContentItems = textContent.items;
+        const scale = viewport.scale;
+        
+        for (const item of textContentItems) {
+          if ('str' in item && item.str) {
+            const textSpan = document.createElement("span");
+            const tx = item.transform;
+            
+            // transform 矩阵: [scaleX, skewY, skewX, scaleY, translateX, translateY]
+            // 直接使用 transform 值进行缩放
+            const fontSize = Math.hypot(tx[2], tx[3]); // 计算 y 方向的缩放（字体高度）
+            const fontScaleX = Math.hypot(tx[0], tx[1]) / fontSize; // x 方向的缩放比例
+            
+            // 计算角度
+            const angle = Math.atan2(tx[1], tx[0]);
+            
+            // 使用 viewport 转换坐标
+            // PDF 坐标原点在左下，需要转换为左上
+            const x = tx[4] * scale;
+            const y = (viewport.viewBox[3] - tx[5]) * scale;
+            
+            // 设置样式
+            textSpan.style.left = `${x}px`;
+            textSpan.style.top = `${y - fontSize * scale}px`; // 减去字体高度以对齐基线
+            textSpan.style.fontSize = `${fontSize * scale}px`;
+            textSpan.style.fontFamily = item.fontName || 'sans-serif';
+            
+            // 应用变换
+            const transforms = [];
+            if (Math.abs(fontScaleX - 1) > 0.001) {
+              transforms.push(`scaleX(${fontScaleX})`);
+            }
+            if (Math.abs(angle) > 0.001) {
+              transforms.push(`rotate(${angle}rad)`);
+            }
+            if (transforms.length > 0) {
+              textSpan.style.transform = transforms.join(' ');
+            }
+            
+            textSpan.textContent = item.str;
+            textLayerDiv.appendChild(textSpan);
+          }
+        }
+
+        pageContainer.appendChild(textLayerDiv);
+      } catch (error: unknown) {
+        // 文本层渲染失败不影响主要功能
+        if (error instanceof Error) {
+          // eslint-disable-next-line no-console
+          console.warn("Text layer rendering failed:", error.message);
+        }
+      }
+    }
+
+    private async renderAnnotationLayer(
+      page: PDFPageProxy,
+      viewport: ReturnType<PDFPageProxy['getViewport']>,
+      pageContainer: HTMLElement
+    ): Promise<void> {
+      try {
+        const annotations = await page.getAnnotations();
+        
+        if (annotations.length === 0) return;
+
+        const annotationLayerDiv = document.createElement("div");
+        annotationLayerDiv.className = "annotationLayer";
+        annotationLayerDiv.style.width = `${viewport.width}px`;
+        annotationLayerDiv.style.height = `${viewport.height}px`;
+
+        // 手动渲染链接注释
+        for (const annotation of annotations) {
+          if (annotation.subtype === 'Link' && annotation.url) {
+            const linkSection = document.createElement("section");
+            linkSection.className = "linkAnnotation";
+            
+            // 计算链接的位置和大小
+            const rect = annotation.rect;
+            if (rect && rect.length === 4) {
+              const [x1, y1, x2, y2] = rect;
+              
+              // PDF 坐标系转换为 canvas 坐标系
+              const [vx1, vy1] = viewport.convertToViewportPoint(x1, y1);
+              const [vx2, vy2] = viewport.convertToViewportPoint(x2, y2);
+              
+              linkSection.style.left = `${Math.min(vx1, vx2)}px`;
+              linkSection.style.top = `${Math.min(vy1, vy2)}px`;
+              linkSection.style.width = `${Math.abs(vx2 - vx1)}px`;
+              linkSection.style.height = `${Math.abs(vy2 - vy1)}px`;
+            }
+            
+            const link = document.createElement("a");
+            link.href = annotation.url;
+            link.target = annotation.newWindow ? "_blank" : "_self";
+            link.rel = "noopener noreferrer nofollow";
+            link.title = annotation.url;
+            
+            linkSection.appendChild(link);
+            annotationLayerDiv.appendChild(linkSection);
+          }
+        }
+
+        if (annotationLayerDiv.children.length > 0) {
+          pageContainer.appendChild(annotationLayerDiv);
+        }
+      } catch (error: unknown) {
+        // 注释层渲染失败不影响主要功能
+        if (error instanceof Error) {
+          // eslint-disable-next-line no-console
+          console.warn("Annotation layer rendering failed:", error.message);
+        }
+      }
+    }
+
+    private createCanvas(): HTMLCanvasElement {
       return document.createElement("canvas");
     }
 
@@ -222,6 +465,7 @@ const { file, fileName } = Astro.props;
     }
 
     private handleError(error: unknown, pdfUrl: string): void {
+      // eslint-disable-next-line no-console
       console.error("Error loading PDF:", error);
 
       if (this.container) {
