@@ -1,0 +1,219 @@
+{
+  "title": "贾继伟",
+  "basic": {
+    "name": "贾继伟",
+    "title": "前端开发工程师",
+    "employementStatus": "离职",
+    "email": "me@jiajiwei.top",
+    "phone": "17607125425",
+    "location": "广东深圳",
+    "birthDate": "1997-10-05T16:00:00.000Z",
+    "fieldOrder": [
+      {
+        "id": "1",
+        "key": "name",
+        "label": "姓名",
+        "type": "text",
+        "visible": true
+      },
+      {
+        "id": "2",
+        "key": "title",
+        "label": "职位",
+        "type": "text",
+        "visible": true
+      },
+      {
+        "id": "3",
+        "key": "employementStatus",
+        "label": "状态",
+        "type": "text",
+        "visible": true
+      },
+      {
+        "id": "4",
+        "key": "birthDate",
+        "label": "生日",
+        "type": "date",
+        "visible": true
+      },
+      {
+        "id": "5",
+        "key": "email",
+        "label": "邮箱",
+        "type": "text",
+        "visible": true
+      },
+      {
+        "id": "6",
+        "key": "phone",
+        "label": "电话",
+        "type": "text",
+        "visible": true
+      },
+      {
+        "id": "7",
+        "key": "location",
+        "label": "所在地",
+        "type": "text",
+        "visible": true
+      }
+    ],
+    "icons": {
+      "email": "Mail",
+      "phone": "Phone",
+      "birthDate": "CalendarRange",
+      "employementStatus": "Briefcase",
+      "location": "MapPin"
+    },
+    "photoConfig": {
+      "width": 90,
+      "height": 120,
+      "aspectRatio": "1:1",
+      "borderRadius": "none",
+      "customBorderRadius": 0,
+      "visible": false
+    },
+    "customFields": [
+      {
+        "id": "personal",
+        "label": "个人网站",
+        "value": "https://jiajiwei.top",
+        "icon": "Globe",
+        "visible": true
+      }
+    ],
+    "photo": "/avatar.png",
+    "githubKey": "",
+    "githubUseName": "",
+    "githubContributionsVisible": false
+  },
+  "education": [
+    {
+      "id": "1",
+      "school": "武汉软件工程职业学院",
+      "major": "电子商务",
+      "degree": "大专",
+      "startDate": "2015-08-31T16:00:00.000Z",
+      "endDate": "2018-06-30T16:00:00.000Z",
+      "visible": true,
+      "gpa": "",
+      "description": "<ul class=\"custom-list\"><li><p>主修课程：电子商务信息</p></li><li><p>选修课程：Web前端、Axure、PhotoShop</p></li></ul>"
+    }
+  ],
+  "skillContent": "<ul class=\"custom-list\"><li><p>前端框架：熟悉 Vue.js、React 及其生态</p></li><li><p>开发语言：熟悉 JavaScript、TypeScript；了解Rust、Python等</p></li><li><p>UI/样式：熟悉ElementUI，熟练使用Tailwind css进行开发</p></li><li><p>后端相关：熟悉Nodejs；熟练使用Deno，Bun等其他运行时</p></li><li><p>技术管理：具备团队管理经验，主导过多个大型项目的技术选型和架构设计</p></li><li><p>AI开发：熟练使用各类AI编程工具，能使用AI解决各类问题，具备Vibe Coding / Spec Coding能力</p></li><li><p>AI知识：熟悉各类LLM，有RAG相关实战经验</p></li></ul>",
+  "experience": [
+    {
+      "id": "1",
+      "company": "上海思芮",
+      "position": "前端工程师",
+      "date": "2022/6 - 至今",
+      "visible": true,
+      "details": "<p></p>"
+    }
+  ],
+  "draggingProjectId": null,
+  "projects": [
+    {
+      "id": "p1",
+      "name": "SFA欧叶云打卡系统",
+      "role": "上海思芮-前端开发工程师",
+      "date": "2024/1 - 2026/2",
+      "description": "<ul class=\"custom-list\"><li><p><span><strong>我的职责</strong>：需求评审与方案设计、核心页面/组件开发（如打卡信息区块与交互流）、组件封装与联调、代码规范与可维护性优化、线上问题定位与修复</span></p></li></ul><ul class=\"custom-list\"><li><p><span><strong>技术要点</strong>：多页面工程化配置、组件化拆分与复用、Vuex 状态收敛、统一请求封装与异常处理、移动端适配（flexible）、i18n 文案治理、ESLint/Prettier 规范落地</span></p></li></ul><ul class=\"custom-list\"><li><p><span><strong>产出效果</strong>：提升打卡链路稳定性与可维护性，降低重复代码与回归成本，保障高频业务在多环境下快速迭代交付</span></p></li><li><p><span><strong>核心难点：打卡链路的强一致性与抗异常能力</strong></span></p></li></ul><p><span>打卡属于高频且强约束业务，需要在<strong>弱网/断网、接口超时、定位权限变化、系统时间不准、重复点击</strong>等复杂场景下，仍保证“只打一次、打对状态、UI 与后端结果一致”。为此通过<strong>统一请求与错误码兜底、幂等/防重提交、关键状态收敛到 Vuex、分阶段加载与骨架屏、异常可恢复提示与重试策略</strong>等方式，提升链路稳定性并降低线上问题率。</span></p>",
+      "visible": true,
+      "link": ""
+    },
+    {
+      "id": "p2",
+      "name": "SFA销售提成方案系统",
+      "role": "上海思芮-前端开发工程师",
+      "date": "2024/1 - 2026/2",
+      "description": "<ul class=\"custom-list\"><li><p><strong>我的职责：</strong>负责销售提成模块端到端交付，保证多页面切换与复用组件的一致性。</p></li></ul><ul class=\"custom-list\"><li><p><strong>技术要点：</strong>根据提成配置的 <strong>动态表单/动态列</strong>：根据提成口径、商品颗粒度、区域/人员范围、计算方式等组合生成配置维度与展示列。复杂页面组件的事件驱动解耦串联配置新增/编辑、批量修改、导入确认后刷新列表；</p></li></ul><ul class=\"custom-list\"><li><p><strong>产出效果：</strong>支撑运营人员完成单台提成方案从“创建 → 配置 → 批量调整 → 导入/导出 → 生效/结束”的完整闭环，显著提升配置效率与准确性。通过动态配置引擎减少重复页面开发与后续规则扩展成本，新增维度可通过配置/构建器快速接入。</p></li></ul><ul class=\"custom-list\"><li><p><strong>核心难点：</strong>业务维度组合多导致表单与表格高度动态化，需要设计可扩展的动态方案并保证校验、回填、更新字段差异化处理。批量导入涉及异步任务与进度轮询、结果预览/确认/放弃、临时数据清理等复杂状态管理，需保证用户操作链路清晰且数据一致。</p></li></ul>",
+      "visible": true
+    },
+    {
+      "id": "e4d6fdd7-0ed6-4095-8ff1-48bab70fb277",
+      "name": "Oncode AI插件",
+      "role": "上海思芮-前端开发工程师",
+      "date": "2022/1- 2024.01",
+      "description": "<p>OneCode VS Code 插件（AI识别原型图前端代码生产）：通过上传原型图截图，AI识别后自动生成Vue SFC代码。支持模板可视化配置、API 字段绑定，实现前端页面“配置即出码”。</p><ul class=\"custom-list\"><li><p><strong>版面结构还原算法</strong>：将 AI 识别输出的 <strong>组件坐标/类型</strong>（位置、尺寸、类别）进行几何关系分析与聚类，解决对齐误差、重叠/嵌套、间距不一致等噪声问题，<strong>自动推导行/列布局</strong>并生成稳定的 <strong>Row/Col Schema</strong>。</p></li></ul><ul class=\"custom-list\"><li><p><strong>Schema → 页面构造链路</strong>：基于行列 Schema 进行组件树构建（容器/叶子节点、父子关系、顺序与层级），再映射到低代码物料与页面 DSL，最终生成可运行页面/组件代码（含属性、插槽、事件与数据绑定）。</p></li></ul><ul class=\"custom-list\"><li><p><strong>泛化与可维护性</strong>：同一套算法需要覆盖不同设计稿风格与业务页面形态（表单/列表/混合布局），在保证出码准确率的同时，维持 Schema 结构可读、可编辑、可扩展。</p></li></ul>",
+      "visible": true
+    },
+    {
+      "id": "p3",
+      "name": "Onecode平台",
+      "role": "上海思芮-前端开发工程师",
+      "date": "2022/6 - 2024/1",
+      "description": "<ul class=\"custom-list\"><li><p><strong>我的职责：</strong>负责前端架构与核心业务模块交付，沉淀公共能力与组件复用。</p></li><li><p><strong>技术要点：</strong>面向单个后端服务（HTTP/Dubbo/MQ），提供“接口 + 结构对象（DTO）”的树形可视化操作与全生命周期管理，支持分组/工程两种视角浏览，接口/DTO 的创建编辑、批量导入、复制、删除影响分析、版本差异跳转、以及服务级设置（contextPath、公共请求头、出码/预览、测试环境、Mock、导入导出等）。</p></li><li><p><strong>产出效果：</strong>为业务系统的数据模型/应用架构实现可视化，并提供接口与数据表管理、扫描监控与报告、版本管理与差异对比、成员与权限/令牌管理等能力，帮助团队在系统迭代中做到“资产可见、变更可控、风险可监控”。</p></li><li><p><strong>核心难点</strong>：复杂可视化能力支撑，图形化建模与大数据渲染、交互流畅度优化。</p></li></ul>",
+      "visible": true
+    },
+    {
+      "id": "1a33f0f0-b10e-490e-b95c-f3dc1650f6f7",
+      "name": "甩手店长",
+      "role": "深圳市华通易点 - 前端开发",
+      "date": "2019.10 - 2022.06",
+      "description": "<ul class=\"custom-list\"><li><p><strong>技术基础建设</strong>： 负责项目初始化搭建，实现基于路由表的动态菜单、权限控制系统，封装公共组件与样 式。</p></li><li><p><strong>核心功能模块开发</strong>： </p><p>1. 产品采集模块： 实现用户通过电商商品链接抓取商品信息至 ERP 系统。 通过自定义事件与公司 Chrome 扩展插件交互：提交链接 → 插件抓取信息回显 → 用户认领商 品至海外平台（Shopee/TikTok）草稿箱。</p><p> 2. Shopee 订单管理模块： 开发支持多店铺管理的订单系统，实现订单状态批量流转（下单、发货、物流监控）。 实现系统与 Chrome 插件交互，通过自定义事件触发插件辅助完成海外订单在源平台的一键回溯 下单。</p><p>3. TikTok 商品管理模块： 负责商品定价体系与详情编辑功能开发。 关键实现：商品类目管理、动态规格增删改、基于规格的 SKU 计算逻辑。 实现编辑后商品一键推送至用户店铺。</p></li></ul>",
+      "visible": true
+    }
+  ],
+  "menuSections": [
+    {
+      "id": "basic",
+      "title": "基本信息",
+      "icon": "👤",
+      "enabled": true,
+      "order": 0
+    },
+    {
+      "id": "skills",
+      "title": "专业技能",
+      "icon": "⚡",
+      "enabled": true,
+      "order": 1
+    },
+    {
+      "id": "projects",
+      "title": "项目经历",
+      "icon": "🚀",
+      "enabled": true,
+      "order": 3
+    },
+    {
+      "id": "education",
+      "title": "教育经历",
+      "icon": "🎓",
+      "enabled": true,
+      "order": 4
+    }
+  ],
+  "customData": {
+    "custom-1": [],
+    "custom-2": [
+      {
+        "id": "53818d44-a1cd-4107-9441-11775bd4e336",
+        "title": "未命名模块",
+        "subtitle": "",
+        "dateRange": "",
+        "description": "",
+        "visible": true
+      }
+    ]
+  },
+  "activeSection": "skills",
+  "globalSettings": {
+    "baseFontSize": 16,
+    "pagePadding": 32,
+    "paragraphSpacing": 12,
+    "lineHeight": 1.7,
+    "sectionSpacing": 10,
+    "headerSize": 18,
+    "subheaderSize": 16,
+    "useIconMode": true,
+    "themeColor": "#000000",
+    "centerSubtitle": true
+  },
+  "id": "e20df055-f1f7-4e36-a7c6-0effa76fd537",
+  "createdAt": "2026-01-23T03:20:59.925Z",
+  "updatedAt": "2026-01-23T03:20:59.925Z",
+  "templateId": "classic"
+}
