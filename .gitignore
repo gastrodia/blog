@@ -29,3 +29,6 @@ public/pagefind
 
 .vercel
 .env*.local
+
+# internal design / planning docs (kept locally only)
+docs/
