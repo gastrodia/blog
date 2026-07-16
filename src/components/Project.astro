@@ -14,9 +14,7 @@ export interface ProjectProps {
 const { title, href, github, desc, tags, wip } = Astro.props;
 ---
 
-<li
-  class="border p-4 flex flex-col relative"
->
+<li class="relative flex flex-col border p-4">
   <div class="flex items-center justify-between">
     <LinkButton
       class="underline decoration-dashed underline-offset-4"
@@ -24,10 +22,10 @@ const { title, href, github, desc, tags, wip } = Astro.props;
       target="_blank">{title}</LinkButton
     >
   </div>
-  <p class="py-2 text-sm flex-1">{desc}</p>
+  <p class="flex-1 py-2 text-sm">{desc}</p>
   <div class="flex justify-between text-xs">
     <p class="flex items-center gap-1">
-      <label><Icon name="Tag"  class="size-4"/></label>
+      <label><Icon name="Tag" class="size-4" /></label>
       <span>{tags}</span>
     </p>
     <LinkButton href={github} class="link-icon link underline" target="_blank">

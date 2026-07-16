@@ -3,6 +3,7 @@
 import { sql } from "@vercel/postgres";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import Groq from "groq-sdk";
+import * as readline from "node:readline";
 
 // RAG（检索增强生成）问答系统
 // 
@@ -145,7 +146,6 @@ ${contextText}
 async function interactiveMode(rag: BlogRAG) {
   console.log("\n💬 进入交互模式（输入 'exit' 或 'quit' 退出）\n");
   
-  const readline = require("readline");
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,

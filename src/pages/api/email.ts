@@ -21,7 +21,7 @@ export const POST: APIRoute = async ({ request }) => {
   const formData = await request.formData();
   const email = formData.get("email")?.toString() || "";
   const message = formData.get("message")?.toString() || "";
-  
+
   if (!email || !message) {
     return redirectToResultPage(false, "email or message is empty!");
   }

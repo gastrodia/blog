@@ -5,9 +5,9 @@ import { SITE } from "@/config";
 import Icon from "@/components/Icon.astro";
 ---
 
-<div 
-  id="chat-widget" 
-  class="fixed bottom-0 right-0 z-9999 font-mono" 
+<div
+  id="chat-widget"
+  class="fixed right-0 bottom-0 z-9999 font-mono"
   data-site-title={SITE.title}
 >
   <!-- 悬浮按钮 -->
@@ -22,14 +22,13 @@ import Icon from "@/components/Icon.astro";
 
   <!-- 聊天窗口 -->
   <div id="chat-window" class="chat-window chat-hidden">
-    
     <!-- 标题栏 -->
     <div class="chat-header">
-      <div class="m-0 text-base font-semibold flex items-center gap-2">
+      <div class="m-0 flex items-center gap-2 text-base font-semibold">
         <Icon name="Robot" class="size-6" />
         {SITE.title}
       </div>
-      
+
       <div class="flex gap-2">
         <button
           id="chat-clear"
@@ -39,7 +38,7 @@ import Icon from "@/components/Icon.astro";
         >
           <Icon name="Clear" class="size-4" />
         </button>
-        
+
         <button
           id="chat-close"
           aria-label="关闭"
@@ -54,11 +53,12 @@ import Icon from "@/components/Icon.astro";
     <!-- 消息列表 -->
     <div
       id="chat-messages"
-      class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 bg-background"
-    ></div>
+      class="flex flex-1 flex-col gap-4 overflow-y-auto bg-background p-4"
+    >
+    </div>
 
     <!-- 输入区域 -->
-    <div class="p-4 bg-background border-t border-border flex gap-2">
+    <div class="flex gap-2 border-t border-border bg-background p-4">
       <input
         id="chat-input"
         type="text"
@@ -67,7 +67,7 @@ import Icon from "@/components/Icon.astro";
         maxlength="500"
         class="chat-input"
       />
-      
+
       <button
         id="chat-send"
         aria-label="发送"
@@ -82,35 +82,34 @@ import Icon from "@/components/Icon.astro";
 
 <script>
   import ChatWidget from "./chat.client.ts";
-  
+
   // ============= 类型声明 =============
   declare global {
     interface Window {
       __chatWidgetInstance?: ChatWidget;
     }
   }
-  
+
   // ============= 辅助函数 =============
   const isDev = import.meta.env.DEV;
-  
+
   function log(...args: unknown[]) {
     if (isDev) {
-      // eslint-disable-next-line no-console
       console.log("[ChatWidget]", ...args);
     }
   }
-  
+
   // ============= 初始化函数 =============
   function initChatWidget() {
     const widget = document.getElementById("chat-widget");
-    
+
     if (!widget) {
       log("未找到 widget 元素");
       return;
     }
-    
+
     const siteTitle = widget.dataset.siteTitle || "Blog";
-    
+
     if (!window.__chatWidgetInstance) {
       log("创建新实例");
       window.__chatWidgetInstance = new ChatWidget(siteTitle);
@@ -119,7 +118,7 @@ import Icon from "@/components/Icon.astro";
       window.__chatWidgetInstance.reinit();
     }
   }
-  
+
   // ============= 事件监听 =============
   // 初次加载
   if (document.readyState === "loading") {
@@ -127,7 +126,7 @@ import Icon from "@/components/Icon.astro";
   } else {
     initChatWidget();
   }
-  
+
   // 监听 Astro 客户端路由事件
   document.addEventListener("astro:page-load", () => {
     log("astro:page-load 事件触发");

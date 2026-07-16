@@ -13,7 +13,7 @@ import Icon from "./Icon.astro";
   <button
     data-button="back-to-top"
     class:list={[
-      "group relative bg-background ",
+      "group relative bg-background",
       "size-12 rounded-full shadow-xl",
       "md:h-8 md:w-fit md:rounded-md md:shadow-none md:focus-visible:rounded-none",
       "md:bg-background/35 md:bg-clip-padding md:backdrop-blur-lg",
@@ -23,7 +23,10 @@ import Icon from "./Icon.astro";
       id="progress-indicator"
       class="absolute inset-0 -z-10 block size-12 scale-110 rounded-full bg-transparent md:hidden md:h-8 md:rounded-md"
     ></span>
-    <Icon name="ChevronLeft" class="size-6 stroke-2 rotate-90 md:hidden inline-block" />
+    <Icon
+      name="ChevronLeft"
+      class="inline-block size-6 rotate-90 stroke-2 md:hidden"
+    />
     <span class="sr-only text-sm group-hover:text-accent md:not-sr-only">
       <Icon name="ArrowNarrowUp" class="inline-block size-4" />
       Back To Top

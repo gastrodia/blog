@@ -20,12 +20,12 @@
     script.setAttribute("data-reactions-enabled", "1");
     script.setAttribute("data-emit-metadata", "0");
     script.setAttribute("data-input-position", "bottom");
-    
+
     // 根据当前主题设置 Giscus 主题
     const currentTheme = document.documentElement.getAttribute("data-theme");
     const theme = currentTheme === "dark" ? "dark" : "light";
     script.setAttribute("data-theme", theme);
-    
+
     script.setAttribute("data-lang", "zh-CN");
     script.setAttribute("crossorigin", "anonymous");
     script.async = true;
@@ -37,7 +37,7 @@
   loadGiscus();
 
   // 监听全局主题变化事件（由 Layout.astro 统一派发）
-  window.addEventListener("theme-change", (event) => {
+  window.addEventListener("theme-change", event => {
     const iframe = document.querySelector("iframe.giscus-frame");
     if (iframe && event.detail) {
       iframe.contentWindow?.postMessage(
@@ -47,4 +47,3 @@
     }
   });
 </script>
-  

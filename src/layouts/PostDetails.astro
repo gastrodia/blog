@@ -285,7 +285,7 @@ const nextPost =
   attachCopyButtons();
 
   /* Go to page start after page swap (only for forward navigation, and not when restoring scroll) */
-  document.addEventListener("astro:before-swap", (e) => {
+  document.addEventListener("astro:before-swap", e => {
     // 保存导航方向到 sessionStorage，供 after-swap 使用
     sessionStorage.setItem("nav-direction", e.direction);
   });
@@ -309,24 +309,27 @@ const nextPost =
     galleryController = new AbortController();
 
     // 使用事件委托
-    document.querySelector("main")?.addEventListener("click", (e) => {
-      const img = e.target.closest("img");
-      if (!img) return;
+    document.querySelector("main")?.addEventListener(
+      "click",
+      e => {
+        const img = e.target.closest("img");
+        if (!img) return;
 
-      const images = Array.from(document.querySelectorAll("main img"));
-      const index = images.indexOf(img);
-      if (index === -1) return;
+        const images = Array.from(document.querySelectorAll("main img"));
+        const index = images.indexOf(img);
+        if (index === -1) return;
 
-      const gallery = images.map(img => ({ src: img.src }));
-      
-      BigPicture({
-        el: img,
-        position: index,
-        gallery,
-      });
-    }, { signal: galleryController.signal });
+        const gallery = images.map(img => ({ src: img.src }));
+
+        BigPicture({
+          el: img,
+          position: index,
+          gallery,
+        });
+      },
+      { signal: galleryController.signal }
+    );
   }
 
   document.addEventListener("astro:page-load", initImageGallery);
 </script>
-

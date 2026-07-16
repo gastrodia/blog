@@ -24,7 +24,7 @@ export const PROFILE = {
   synopsis: "Full Stack Web Developer",
   resumeName: `前端开发工程师_贾继伟`,
   avatar: "/assets/images/about/self.jpg",
-  resume: `/resume.pdf`
+  resume: `/resume.pdf`,
 } as const;
 
 export const SOCIALS: Social[] = [

@@ -9,8 +9,14 @@ import Icon from "./Icon.astro";
   aria-label="auto"
   aria-live="polite"
 >
-  <Icon name="Moon" class="size-full stroke-2 absolute top-[50%] left-[50%] -translate-[50%] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-  <Icon name="SunHigh" class="size-full stroke-2 absolute top-[50%] left-[50%] -translate-[50%] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
+  <Icon
+    name="Moon"
+    class="absolute top-[50%] left-[50%] size-full -translate-[50%] scale-100 rotate-0 stroke-2 transition-all dark:scale-0 dark:-rotate-90"
+  />
+  <Icon
+    name="SunHigh"
+    class="absolute top-[50%] left-[50%] size-full -translate-[50%] scale-0 rotate-90 stroke-2 transition-all dark:scale-100 dark:rotate-0"
+  />
 </button>
 
 <script is:inline>
@@ -18,15 +24,16 @@ import Icon from "./Icon.astro";
   // 防止重复绑定的标记
   if (!window.__themeToggleInitialized) {
     window.__themeToggleInitialized = true;
-    
-    document.addEventListener("click", async (e) => {
+
+    document.addEventListener("click", async e => {
       // 检查点击的是否是主题切换按钮或其子元素
       const themeBtn = e.target.closest("#theme-btn");
-      
+
       if (themeBtn) {
-        const currentTheme = document.documentElement.getAttribute("data-theme");
+        const currentTheme =
+          document.documentElement.getAttribute("data-theme");
         const newTheme = currentTheme === "dark" ? "light" : "dark";
-        
+
         // 检查浏览器是否支持 View Transitions API
         if (!document.startViewTransition) {
           // 不支持则直接切换
@@ -34,28 +41,31 @@ import Icon from "./Icon.astro";
           localStorage.setItem("theme", newTheme);
           return;
         }
-        
+
         // 获取点击坐标
         const x = e.clientX;
         const y = e.clientY;
-        
+
         // 计算需要的最大半径（覆盖整个屏幕的对角线）
         const endRadius = Math.hypot(
           Math.max(x, window.innerWidth - x),
           Math.max(y, window.innerHeight - y)
         );
-        
+
         // 设置 CSS 自定义属性用于动画
-        document.documentElement.style.setProperty('--ripple-x', x + 'px');
-        document.documentElement.style.setProperty('--ripple-y', y + 'px');
-        document.documentElement.style.setProperty('--ripple-radius', endRadius + 'px');
-        
+        document.documentElement.style.setProperty("--ripple-x", x + "px");
+        document.documentElement.style.setProperty("--ripple-y", y + "px");
+        document.documentElement.style.setProperty(
+          "--ripple-radius",
+          endRadius + "px"
+        );
+
         // 启动视图过渡动画
         const transition = document.startViewTransition(() => {
           document.documentElement.setAttribute("data-theme", newTheme);
           localStorage.setItem("theme", newTheme);
         });
-        
+
         // 等待过渡完成
         await transition.ready;
       }
@@ -73,19 +83,21 @@ import Icon from "./Icon.astro";
       animation: none;
       mix-blend-mode: normal;
     }
-    
+
     /* 设置新视图的涟漪动画 */
     ::view-transition-new(root) {
       clip-path: circle(0 at var(--ripple-x, 50%) var(--ripple-y, 50%));
       animation: ripple-expand 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     }
-    
+
     /* 涟漪扩散动画 */
     @keyframes ripple-expand {
       to {
-        clip-path: circle(var(--ripple-radius, 100vmax) at var(--ripple-x, 50%) var(--ripple-y, 50%));
+        clip-path: circle(
+          var(--ripple-radius, 100vmax) at var(--ripple-x, 50%)
+            var(--ripple-y, 50%)
+        );
       }
     }
   }
 </style>
-

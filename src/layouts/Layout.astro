@@ -49,10 +49,15 @@ const structuredData = {
 };
 
 // 将src/assets/icons目录下的所有svg文件生成一个svg sprite
-const icons = import.meta.glob<string>("@/assets/icons/*.svg", { query: '?raw', eager: true, import: 'default' });
-// 转为symbol 
+const icons = import.meta.glob<string>("@/assets/icons/*.svg", {
+  query: "?raw",
+  eager: true,
+  import: "default",
+});
+// 转为symbol
 const svgSprite = Object.entries(icons).map(([key, svgContent]) => {
-  const name = key.split("/").pop()?.replace(".svg", "").replace("Icon", "") || "";
+  const name =
+    key.split("/").pop()?.replace(".svg", "").replace("Icon", "") || "";
   return svg2symbol(name, svgContent);
 });
 ---
@@ -119,21 +124,24 @@ const svgSprite = Object.entries(icons).map(([key, svgContent]) => {
         const realTheme = savedTheme || (systemDark ? "dark" : "light");
         document.firstElementChild?.setAttribute("data-theme", realTheme);
       }
-      
+
       // 首次加载时应用主题
       applyThemeFromStorage();
-      
+
       // View Transitions 页面切换后重新应用主题
       document.addEventListener("astro:after-swap", applyThemeFromStorage);
 
       // 全局主题管理器 - 监听主题变化并派发自定义事件
       function setupThemeManager() {
         const themeObserver = new MutationObserver(() => {
-          const currentTheme = document.documentElement.getAttribute("data-theme");
+          const currentTheme =
+            document.documentElement.getAttribute("data-theme");
           // 派发自定义事件，让其他组件（如 Giscus）可以监听
-          window.dispatchEvent(new CustomEvent("theme-change", { 
-            detail: { theme: currentTheme === "dark" ? "dark" : "light" }
-          }));
+          window.dispatchEvent(
+            new CustomEvent("theme-change", {
+              detail: { theme: currentTheme === "dark" ? "dark" : "light" },
+            })
+          );
         });
 
         themeObserver.observe(document.documentElement, {
@@ -162,7 +170,6 @@ const svgSprite = Object.entries(icons).map(([key, svgContent]) => {
       href={new URL("rss.xml", Astro.site)}
     />
 
-
     {
       // If PUBLIC_GOOGLE_SITE_VERIFICATION is set in the environment variable,
       // include google-site-verification tag in the heading
@@ -180,7 +187,12 @@ const svgSprite = Object.entries(icons).map(([key, svgContent]) => {
     <!-- <script is:inline src="/toggle-theme.js"></script> -->
   </head>
   <body>
-    <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="position: absolute; width: 0; height: 0; overflow: hidden;" set:html={svgSprite.join("")}></svg>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      xmlns:xlink="http://www.w3.org/1999/xlink"
+      style="position: absolute; width: 0; height: 0; overflow: hidden;"
+      set:html={svgSprite.join("")}
+    />
     <slot />
     <ChatWidget />
   </body>

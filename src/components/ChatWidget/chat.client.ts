@@ -63,20 +63,20 @@ class ChatWidget {
       this.elements.button.classList.remove("chat-hidden");
       this.elements.button.classList.add("visible");
     }
-    
+
     // 初始化 Shiki 高亮器（只初始化一次）
     if (!this.highlighter) {
       await this.initHighlighter();
     }
-    
+
     // 绑定事件
     this.bindEvents();
     this.eventsBound = true;
-    
+
     this.updateInputPlaceholder();
     this.renderMessages();
   }
-  
+
   // 更新 DOM 元素引用
   private updateElements() {
     this.elements.widget = document.getElementById("chat-widget") || undefined;
@@ -86,89 +86,103 @@ class ChatWidget {
       document.getElementById("chat-messages") || undefined;
     this.elements.input =
       (document.getElementById("chat-input") as HTMLInputElement) || undefined;
-    this.elements.sendBtn =
-      document.getElementById("chat-send") || undefined;
-    this.elements.clearBtn =
-      document.getElementById("chat-clear") || undefined;
-    this.elements.closeBtn =
-      document.getElementById("chat-close") || undefined;
+    this.elements.sendBtn = document.getElementById("chat-send") || undefined;
+    this.elements.clearBtn = document.getElementById("chat-clear") || undefined;
+    this.elements.closeBtn = document.getElementById("chat-close") || undefined;
   }
-  
+
   // 公共方法：重新初始化（用于客户端路由后）
   public reinit() {
     console.log("[ChatWidget] 开始重新初始化, 当前 isOpen:", this.state.isOpen);
-    
+
     // 更新 DOM 元素引用
     this.updateElements();
-    
+
     console.log("[ChatWidget] DOM 元素:", {
       button: !!this.elements.button,
       window: !!this.elements.window,
-      input: !!this.elements.input
+      input: !!this.elements.input,
     });
-    
+
     // 重置所有状态
     this.state.isOpen = false;
     this.isAnimating = false;
-    
+
     // 强制重置 UI：窗口隐藏，按钮显示
     if (this.elements.window) {
       this.elements.window.classList.remove("open");
       this.elements.window.classList.add("chat-hidden");
     }
-    
+
     if (this.elements.button) {
       this.elements.button.classList.remove("chat-hidden");
       this.elements.button.classList.add("visible");
     }
-    
+
     // 重新绑定事件
     this.rebindButtonEvents();
-    
+
     this.updateInputPlaceholder();
     // 重新渲染消息
     this.renderMessages();
-    
+
     console.log("[ChatWidget] 重新初始化完成");
   }
-  
+
   // 重新绑定按钮事件（用于客户端路由后重新初始化）
   private rebindButtonEvents() {
     // 通过克隆节点来移除所有旧的事件监听器
     if (this.elements.button) {
       const newButton = this.elements.button.cloneNode(true) as HTMLElement;
-      this.elements.button.parentNode?.replaceChild(newButton, this.elements.button);
+      this.elements.button.parentNode?.replaceChild(
+        newButton,
+        this.elements.button
+      );
       this.elements.button = newButton;
       this.elements.button.addEventListener("click", () => this.toggleChat());
     }
-    
+
     if (this.elements.closeBtn) {
       const newCloseBtn = this.elements.closeBtn.cloneNode(true) as HTMLElement;
-      this.elements.closeBtn.parentNode?.replaceChild(newCloseBtn, this.elements.closeBtn);
+      this.elements.closeBtn.parentNode?.replaceChild(
+        newCloseBtn,
+        this.elements.closeBtn
+      );
       this.elements.closeBtn = newCloseBtn;
       this.elements.closeBtn.addEventListener("click", () => this.closeChat());
     }
-    
+
     if (this.elements.sendBtn) {
       const newSendBtn = this.elements.sendBtn.cloneNode(true) as HTMLElement;
-      this.elements.sendBtn.parentNode?.replaceChild(newSendBtn, this.elements.sendBtn);
+      this.elements.sendBtn.parentNode?.replaceChild(
+        newSendBtn,
+        this.elements.sendBtn
+      );
       this.elements.sendBtn = newSendBtn;
       this.elements.sendBtn.addEventListener("click", () => this.sendMessage());
     }
-    
+
     if (this.elements.clearBtn) {
       const newClearBtn = this.elements.clearBtn.cloneNode(true) as HTMLElement;
-      this.elements.clearBtn.parentNode?.replaceChild(newClearBtn, this.elements.clearBtn);
+      this.elements.clearBtn.parentNode?.replaceChild(
+        newClearBtn,
+        this.elements.clearBtn
+      );
       this.elements.clearBtn = newClearBtn;
-      this.elements.clearBtn.addEventListener("click", () => this.clearHistory());
+      this.elements.clearBtn.addEventListener("click", () =>
+        this.clearHistory()
+      );
     }
-    
+
     // 输入框事件
     if (this.elements.input) {
       const newInput = this.elements.input.cloneNode(true) as HTMLInputElement;
-      this.elements.input.parentNode?.replaceChild(newInput, this.elements.input);
+      this.elements.input.parentNode?.replaceChild(
+        newInput,
+        this.elements.input
+      );
       this.elements.input = newInput;
-      this.elements.input.addEventListener("keydown", (e) => {
+      this.elements.input.addEventListener("keydown", e => {
         if (e.key === "Enter" && !e.shiftKey) {
           e.preventDefault();
           this.sendMessage();
@@ -203,8 +217,14 @@ class ChatWidget {
 
       // 配置 marked 使用自定义 renderer
       const renderer = new marked.Renderer();
-      
-      renderer.code = ({ text, lang }: { text: string; lang?: string }): string => {
+
+      renderer.code = ({
+        text,
+        lang,
+      }: {
+        text: string;
+        lang?: string;
+      }): string => {
         if (!this.highlighter || !lang) {
           // 降级处理：返回基本的代码块
           const escapedText = text
@@ -215,12 +235,14 @@ class ChatWidget {
             .replace(/'/g, "&#039;");
           return `<pre><code class="language-${lang || "text"}">${escapedText}</code></pre>`;
         }
-        
+
         try {
           // 检测系统主题
-          const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          const isDark = window.matchMedia(
+            "(prefers-color-scheme: dark)"
+          ).matches;
           const theme = isDark ? "github-dark" : "github-light";
-          
+
           return this.highlighter.codeToHtml(text, {
             lang: lang,
             theme,
@@ -236,36 +258,54 @@ class ChatWidget {
       };
 
       // 自定义链接渲染器，确保链接正确处理
-      renderer.link = ({ href, title, text }: { href: string; title?: string | null; text: string }): string => {
+      renderer.link = ({
+        href,
+        title,
+        text,
+      }: {
+        href: string;
+        title?: string | null;
+        text: string;
+      }): string => {
         // 清理 href，移除可能错误包含的中文字符
         let cleanHref = href;
-        
+
         // 如果href包含编码的中文字符（%E开头），尝试解码并截断
         try {
           const decoded = decodeURIComponent(href);
           // 查找常见的中文标点符号，作为URL结束的标志
-          const endMarkers = ['。', '，', '、', '；', '：', '！', '？', ' ', '\n'];
+          const endMarkers = [
+            "。",
+            "，",
+            "、",
+            "；",
+            "：",
+            "！",
+            "？",
+            " ",
+            "\n",
+          ];
           let endPos = -1;
-          
+
           for (const marker of endMarkers) {
             const pos = decoded.indexOf(marker);
             if (pos > 0 && (endPos === -1 || pos < endPos)) {
               endPos = pos;
             }
           }
-          
+
           if (endPos > 0) {
             cleanHref = decoded.substring(0, endPos);
           }
         } catch {
           // 解码失败，使用原始href
         }
-        
-        const titleAttr = title ? ` title="${title}"` : '';
+
+        const titleAttr = title ? ` title="${title}"` : "";
         const escapedHref = cleanHref
           .replace(/&/g, "&amp;")
           .replace(/"/g, "&quot;");
-        
+
         return `<a href="${escapedHref}"${titleAttr} target="_blank" rel="noopener noreferrer" class="text-accent underline hover:text-accent/80">${text}</a>`;
       };
 
@@ -287,7 +327,7 @@ class ChatWidget {
 
     // 发送消息
     this.elements.sendBtn?.addEventListener("click", () => this.sendMessage());
-    this.elements.input?.addEventListener("keydown", (e) => {
+    this.elements.input?.addEventListener("keydown", e => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         this.sendMessage();
@@ -295,11 +335,13 @@ class ChatWidget {
     });
 
     // 清空对话
-    this.elements.clearBtn?.addEventListener("click", () => this.clearHistory());
+    this.elements.clearBtn?.addEventListener("click", () =>
+      this.clearHistory()
+    );
 
     // ESC 键关闭（只绑定一次）
     if (!this.eventsBound) {
-      document.addEventListener("keydown", (e) => {
+      document.addEventListener("keydown", e => {
         if (e.key === "Escape" && this.state.isOpen) {
           this.closeChat();
         }
@@ -331,7 +373,7 @@ class ChatWidget {
     if (this.isAnimating) {
       return;
     }
-    
+
     this.state.isOpen = !this.state.isOpen;
     this.updateUI();
   }
@@ -341,7 +383,7 @@ class ChatWidget {
     if (this.isAnimating) {
       return;
     }
-    
+
     this.state.isOpen = false;
     this.updateUI();
   }
@@ -349,7 +391,7 @@ class ChatWidget {
   private updateUI() {
     // 标记动画开始
     this.isAnimating = true;
-    
+
     if (this.state.isOpen) {
       // 立即隐藏按钮
       if (this.elements.button) {
@@ -358,7 +400,7 @@ class ChatWidget {
         // 确保 CSS 过渡生效
         void this.elements.button.offsetHeight;
       }
-      
+
       // 延迟显示窗口，创建流畅的过渡效果
       setTimeout(() => {
         if (this.elements.window) {
@@ -367,7 +409,7 @@ class ChatWidget {
         }
         this.elements.input?.focus();
         this.scrollToBottom();
-        
+
         // 动画完成后解锁
         setTimeout(() => {
           this.isAnimating = false;
@@ -381,14 +423,14 @@ class ChatWidget {
         // 确保 CSS 过渡生效
         void this.elements.window.offsetHeight;
       }
-      
+
       // 延迟显示按钮，创建流畅的过渡效果
       setTimeout(() => {
         if (this.elements.button) {
           this.elements.button.classList.remove("chat-hidden");
           this.elements.button.classList.add("visible");
         }
-        
+
         // 动画完成后解锁
         setTimeout(() => {
           this.isAnimating = false;
@@ -444,9 +486,9 @@ class ChatWidget {
       mode === "summary"
         ? []
         : this.state.messages
-            .filter((msg) => !msg.content.startsWith("❌")) // 过滤错误消息
+            .filter(msg => !msg.content.startsWith("❌")) // 过滤错误消息
             .slice(-10) // 只取最近 10 条
-            .map((msg) => ({
+            .map(msg => ({
               role: msg.role,
               content: msg.content,
             }));
@@ -653,28 +695,26 @@ class ChatWidget {
       `;
 
       // 绑定快捷问题
-      this.elements.messagesList
-        .querySelectorAll(".quick-btn")
-        .forEach((btn) => {
-          btn.addEventListener("click", (e) => {
-            const el = e.target as HTMLElement;
-            const action = el.dataset.action;
-            if (action === "summary") {
-              const pid = el.dataset.postId || this.getCurrentPostId();
-              this.sendSummaryOfCurrentPost(pid || undefined);
-              return;
-            }
+      this.elements.messagesList.querySelectorAll(".quick-btn").forEach(btn => {
+        btn.addEventListener("click", e => {
+          const el = e.target as HTMLElement;
+          const action = el.dataset.action;
+          if (action === "summary") {
+            const pid = el.dataset.postId || this.getCurrentPostId();
+            this.sendSummaryOfCurrentPost(pid || undefined);
+            return;
+          }
 
-            const question = el.dataset.question;
-            if (question && this.elements.input) {
-              this.elements.input.value = question;
-              this.sendMessage();
-            }
-          });
+          const question = el.dataset.question;
+          if (question && this.elements.input) {
+            this.elements.input.value = question;
+            this.sendMessage();
+          }
         });
+      });
     } else {
       // 渲染消息
-      this.state.messages.forEach((msg) => {
+      this.state.messages.forEach(msg => {
         const messageDiv = document.createElement("div");
         messageDiv.className = `message flex flex-col max-w-[85%] ${
           msg.role === "user" ? "self-end" : "self-start"
@@ -686,33 +726,32 @@ class ChatWidget {
             <div class="mt-2 p-3 bg-background border border-border rounded-lg text-xs">
               <div class="font-semibold mb-2 text-foreground">📚 参考来源：</div>
               ${msg.sources
-                .map(
-                  (src) => {
-                    // 检查是否是 md/mdx 文件
-                    const isMdFile = /\.mdx?$/i.test(src.source);
-                    if (isMdFile) {
-                      return `
+                .map(src => {
+                  // 检查是否是 md/mdx 文件
+                  const isMdFile = /\.mdx?$/i.test(src.source);
+                  if (isMdFile) {
+                    return `
                 <a href="/posts/p${src.source.replace(/\.mdx?$/, "")}" class="flex justify-between items-center px-2 py-2 mt-1 bg-muted rounded text-foreground no-underline transition-all text-xs hover:bg-accent hover:text-background" target="_blank">
                   <span>${src.title}</span> <span class="font-semibold opacity-70">${src.similarity}%</span>
                 </a>
               `;
-                    } else {
-                      return `
+                  } else {
+                    return `
                 <div class="flex justify-between items-center px-2 py-2 mt-1 bg-muted rounded text-foreground text-xs opacity-75 cursor-default">
                   <span>${src.title}</span> <span class="font-semibold opacity-70">${src.similarity}%</span>
                 </div>
               `;
-                    }
                   }
-                )
+                })
                 .join("")}
             </div>
           `;
         }
 
-        const contentClass = msg.role === "user" 
-          ? "px-4 py-3 rounded-2xl rounded-br-sm bg-accent text-background wrap-break-word leading-relaxed"
-          : "px-4 py-3 rounded-2xl rounded-bl-sm bg-muted text-foreground wrap-break-word leading-relaxed chat-md-content";
+        const contentClass =
+          msg.role === "user"
+            ? "px-4 py-3 rounded-2xl rounded-br-sm bg-accent text-background wrap-break-word leading-relaxed"
+            : "px-4 py-3 rounded-2xl rounded-bl-sm bg-muted text-foreground wrap-break-word leading-relaxed chat-md-content";
 
         messageDiv.innerHTML = `
           <div class="${contentClass}">
@@ -753,7 +792,10 @@ class ChatWidget {
     this.state.isLoading = true;
     this.addLoadingMessage();
     try {
-      await this.streamChatResponse("总结当前文章", { mode: "summary", postId: pid });
+      await this.streamChatResponse("总结当前文章", {
+        mode: "summary",
+        postId: pid,
+      });
     } catch (error) {
       console.error("总结失败:", error);
       this.addErrorMessage("抱歉，总结文章时出错了，请稍后再试。");
@@ -769,7 +811,10 @@ class ChatWidget {
       // 降级处理：如果 highlighter 未初始化，使用简单替换
       return content
         .replace(/\n/g, "<br>")
-        .replace(/`([^`]+)`/g, '<code class="bg-black/10 dark:bg-white/10 px-1 py-0.5 rounded text-sm">$1</code>')
+        .replace(
+          /`([^`]+)`/g,
+          '<code class="bg-black/10 dark:bg-white/10 px-1 py-0.5 rounded text-sm">$1</code>'
+        )
         .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
         .replace(/\*([^*]+)\*/g, "<em>$1</em>");
     }
@@ -777,43 +822,49 @@ class ChatWidget {
     try {
       // 预处理：智能处理URL
       let processedContent = content;
-      
+
       // 先保护多行代码块 ```...```（真正的代码）
       const multilineCodeBlocks: string[] = [];
-      const multilineCodePlaceholder = '___MULTILINE_CODE___';
-      
-      processedContent = processedContent.replace(/```[\s\S]*?```/g, (match) => {
+      const multilineCodePlaceholder = "___MULTILINE_CODE___";
+
+      processedContent = processedContent.replace(/```[\s\S]*?```/g, match => {
         multilineCodeBlocks.push(match);
         return `${multilineCodePlaceholder}${multilineCodeBlocks.length - 1}${multilineCodePlaceholder}`;
       });
-      
+
       // 处理行内代码：如果行内代码只包含URL，将其转换为链接；否则保留为代码
-      processedContent = processedContent.replace(/`([^`]+)`/g, (match, content) => {
-        const trimmedContent = content.trim();
-        // 检查是否是纯URL（http/https开头，且不包含空格）
-        if (/^https?:\/\/[^\s]+$/.test(trimmedContent)) {
-          // 是纯URL，转换为链接
-          return `[${trimmedContent}](${trimmedContent})`;
+      processedContent = processedContent.replace(
+        /`([^`]+)`/g,
+        (match, content) => {
+          const trimmedContent = content.trim();
+          // 检查是否是纯URL（http/https开头，且不包含空格）
+          if (/^https?:\/\/[^\s]+$/.test(trimmedContent)) {
+            // 是纯URL，转换为链接
+            return `[${trimmedContent}](${trimmedContent})`;
+          }
+          // 不是纯URL，保留为行内代码
+          return match;
         }
-        // 不是纯URL，保留为行内代码
-        return match;
-      });
-      
+      );
+
       // 处理裸露的URL（不在任何标记中的URL）
       // 匹配URL，但确保前面不是 ]( 或 [（避免重复处理已经是链接的URL）
       processedContent = processedContent.replace(
         /(?<!\]\(|!?\[)(https?:\/\/[^\s<>）】\]`]+?)(?=[。，、；：！？）】\]\s]|$)/g,
-        (match) => {
+        match => {
           return `[${match}](${match})`;
         }
       );
-      
+
       // 恢复多行代码块
       processedContent = processedContent.replace(
-        new RegExp(`${multilineCodePlaceholder}(\\d+)${multilineCodePlaceholder}`, 'g'),
+        new RegExp(
+          `${multilineCodePlaceholder}(\\d+)${multilineCodePlaceholder}`,
+          "g"
+        ),
         (_, index) => multilineCodeBlocks[parseInt(index)]
       );
-      
+
       // 使用 marked 渲染 markdown
       const html = marked.parse(processedContent, { async: false }) as string;
       return html;
@@ -835,9 +886,9 @@ class ChatWidget {
 
   // 清空历史
   private clearHistory() {
-      this.state.messages = [];
-      this.saveHistory();
-      this.renderMessages();
+    this.state.messages = [];
+    this.saveHistory();
+    this.renderMessages();
   }
 
   // 加载历史记录

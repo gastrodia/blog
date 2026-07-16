@@ -11,7 +11,7 @@ import {
 } from "@shikijs/transformers";
 import { transformerFileName } from "./src/utils/transformers/fileName";
 import { SITE } from "./src/config";
-import vercel from '@astrojs/vercel';
+import vercel from "@astrojs/vercel";
 
 // https://astro.build/config
 export default defineConfig({
@@ -49,7 +49,7 @@ export default defineConfig({
     plugins: [tailwindcss()],
     optimizeDeps: {
       exclude: ["@resvg/resvg-js"],
-    }
+    },
   },
   image: {
     responsiveStyles: true,

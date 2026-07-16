@@ -5,12 +5,12 @@ import Icon from "./Icon.astro";
 ---
 
 <section id="about-me" class="scroll-mt-16">
-  <div class="hidden lg:flex justify-end mb-2">
+  <div class="mb-2 hidden justify-end lg:flex">
     <GetResume />
   </div>
-  <div class="grid grid-cols-1 lg:grid-cols-[1fr_6fr] gap-x-10 gap-y-6">
-    <div class="flex justify-between gap-2 flex-wrap">
-      <label class="whitespace-nowrap text-3xl font-bold lg:text-right">
+  <div class="grid grid-cols-1 gap-x-10 gap-y-6 lg:grid-cols-[1fr_6fr]">
+    <div class="flex flex-wrap justify-between gap-2">
+      <label class="text-3xl font-bold whitespace-nowrap lg:text-right">
         ABOUT ME
       </label>
       <div class="block lg:hidden">
@@ -18,7 +18,7 @@ import Icon from "./Icon.astro";
       </div>
     </div>
     <div class="space-y-2">
-        <Fragment set:html={PROFILE.aboutMe} />
+      <Fragment set:html={PROFILE.aboutMe} />
     </div>
     <label class="text-xl font-bold lg:text-right"> SKILLS </label>
     <ul class="grid grid-cols-2 gap-6 sm:grid-cols-3">

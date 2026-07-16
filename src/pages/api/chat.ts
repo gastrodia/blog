@@ -35,7 +35,9 @@ async function getQueryEmbedding(
   geminiKey: string,
   query: string
 ): Promise<number[]> {
-  console.log(`🔍 正在将问题转换为向量: "${query.substring(0, 50)}${query.length > 50 ? '...' : ''}"`);
+  console.log(
+    `🔍 正在将问题转换为向量: "${query.substring(0, 50)}${query.length > 50 ? "..." : ""}"`
+  );
   const genAI = new GoogleGenerativeAI(geminiKey);
   const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
   const result = await model.embedContent(query);
@@ -53,9 +55,9 @@ async function searchSimilarDocs(
 
   // 先获取所有结果看看相似度分布
   const allResults = await sql`
-    SELECT 
-      title, 
-      source, 
+    SELECT
+      title,
+      source,
       text,
       description,
       1 - (embedding <=> ${embeddingString}::vector) as similarity
@@ -67,17 +69,21 @@ async function searchSimilarDocs(
   // 打印前10个结果的相似度，用于调试
   console.log("📊 相似度排名（前10）:");
   allResults.rows.forEach((row, idx) => {
-    console.log(`  ${idx + 1}. ${row.title}: ${((row.similarity as number) * 100).toFixed(2)}%`);
+    console.log(
+      `  ${idx + 1}. ${row.title}: ${((row.similarity as number) * 100).toFixed(2)}%`
+    );
   });
 
   // 过滤出符合阈值的结果
   const filteredResults = allResults.rows
-    .filter((row) => (row.similarity as number) >= minSimilarity)
+    .filter(row => (row.similarity as number) >= minSimilarity)
     .slice(0, topK);
 
-  console.log(`✅ 返回 ${filteredResults.length} 个结果（相似度 >= ${minSimilarity * 100}%）`);
+  console.log(
+    `✅ 返回 ${filteredResults.length} 个结果（相似度 >= ${minSimilarity * 100}%）`
+  );
 
-  return filteredResults.map((row) => ({
+  return filteredResults.map(row => ({
     title: row.title as string,
     source: row.source as string,
     description: (row.description as string) || "",
@@ -149,7 +155,7 @@ function buildPrompt(
 
 **引用来源的正确方式：**
 ✅ "根据资料显示..."
-✅ "作者的信息是..."  
+✅ "作者的信息是..."
 ✅ "从介绍中可以看到..."
 ✅ 或者直接回答内容
 
@@ -177,7 +183,7 @@ function buildPrompt(
   // 添加历史对话（最近 5 轮，避免 token 过多）
   if (history && history.length > 0) {
     const recentHistory = history.slice(-10); // 保留最近 10 条消息（5轮对话）
-    recentHistory.forEach((msg) => {
+    recentHistory.forEach(msg => {
       messages.push({
         role: msg.role === "user" ? "user" : "assistant",
         content: msg.content,
@@ -188,7 +194,7 @@ function buildPrompt(
   // 添加当前问题 - 优化指引
   messages.push({
     role: "user",
-    content: `${contextText ? `===== 检索到的相关文档 =====\n${contextText}\n===== 文档结束 =====\n\n` : ''}【用户问题】${question}
+    content: `${contextText ? `===== 检索到的相关文档 =====\n${contextText}\n===== 文档结束 =====\n\n` : ""}【用户问题】${question}
 
 【回答指引】
 - 如果是问候/闲聊：自然友好地回应
@@ -216,13 +222,10 @@ export const POST: APIRoute = async ({ request }) => {
     const contentType = request.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
       console.error("无效的 Content-Type:", contentType);
-      return new Response(
-        JSON.stringify({ error: "请求必须是 JSON 格式" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      return new Response(JSON.stringify({ error: "请求必须是 JSON 格式" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     // 读取请求体
@@ -231,13 +234,10 @@ export const POST: APIRoute = async ({ request }) => {
 
     if (!text || text.trim() === "") {
       console.error("请求体为空");
-      return new Response(
-        JSON.stringify({ error: "请求体不能为空" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      return new Response(JSON.stringify({ error: "请求体不能为空" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     // 解析 JSON
@@ -247,7 +247,11 @@ export const POST: APIRoute = async ({ request }) => {
     } catch (parseError) {
       console.error("JSON 解析错误:", parseError);
       return new Response(
-        JSON.stringify({ error: "JSON 格式错误: " + (parseError instanceof Error ? parseError.message : "未知错误") }),
+        JSON.stringify({
+          error:
+            "JSON 格式错误: " +
+            (parseError instanceof Error ? parseError.message : "未知错误"),
+        }),
         {
           status: 400,
           headers: { "Content-Type": "application/json" },
@@ -282,10 +286,13 @@ export const POST: APIRoute = async ({ request }) => {
         hasGroq: !!GROQ_API_KEY,
         hasPostgres: !!POSTGRES_URL,
       });
-      return new Response(JSON.stringify({ error: "服务配置错误，请联系管理员" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "服务配置错误，请联系管理员" }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     // 设置 POSTGRES_URL 到 process.env（@vercel/postgres 需要）
@@ -294,18 +301,24 @@ export const POST: APIRoute = async ({ request }) => {
     // ========== 文章总结模式：按 id 取全文，直接总结（不走 RAG） ==========
     if (mode === "summary") {
       if (!postId || typeof postId !== "string") {
-        return new Response(JSON.stringify({ error: "缺少 postId，无法总结文章" }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ error: "缺少 postId，无法总结文章" }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
       }
 
       const doc = await getDocById(postId);
       if (!doc) {
-        return new Response(JSON.stringify({ error: `未找到文章内容（id=${postId}）` }), {
-          status: 404,
-          headers: { "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ error: `未找到文章内容（id=${postId}）` }),
+          {
+            status: 404,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
       }
 
       const summarySystemPrompt = `你是 Code_You 博客的智能助手。请用中文对“当前文章”做一个结构化总结。
@@ -373,10 +386,13 @@ ${articleText}`;
     }
 
     if (!GEMINI_API_KEY) {
-      return new Response(JSON.stringify({ error: "服务配置错误，请联系管理员" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "服务配置错误，请联系管理员" }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     // 1. 将问题转为向量
@@ -401,8 +417,12 @@ ${articleText}`;
       similarDocs = await searchSimilarDocs(queryEmbedding);
       console.log(`✅ 找到 ${similarDocs.length} 个相关文档`);
       if (similarDocs.length > 0) {
-        console.log("📄 相关文档:", 
-          similarDocs.map(d => `${d.title} (${(d.similarity * 100).toFixed(1)}%)`).join(", "));
+        console.log(
+          "📄 相关文档:",
+          similarDocs
+            .map(d => `${d.title} (${(d.similarity * 100).toFixed(1)}%)`)
+            .join(", ")
+        );
       }
     } catch (error) {
       console.error("❌ 搜索文档失败:", error);
@@ -417,22 +437,30 @@ ${articleText}`;
 
     // 如果没有找到相关内容，让模型自己回答（可能是问候或无关问题）
     // 不立即返回，而是传递空上下文让模型处理
-    console.log(similarDocs.length === 0 ? '未找到相关文档，让模型自由回答' : `找到 ${similarDocs.length} 个相关文档`);
+    console.log(
+      similarDocs.length === 0
+        ? "未找到相关文档，让模型自由回答"
+        : `找到 ${similarDocs.length} 个相关文档`
+    );
 
     // 3. 构建 Prompt（即使没有文档也继续，让模型处理问候等情况）
-    let promptData: { system: string; messages: { role: string; content: string }[] };
+    let promptData: {
+      system: string;
+      messages: { role: string; content: string }[];
+    };
     try {
       // 如果没有文档，传递空数组
-      promptData = buildPrompt(message, similarDocs.length > 0 ? similarDocs : [], history);
+      promptData = buildPrompt(
+        message,
+        similarDocs.length > 0 ? similarDocs : [],
+        history
+      );
     } catch (error) {
       console.error("构建 Prompt 失败:", error);
-      return new Response(
-        JSON.stringify({ error: "处理对话历史时出错" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      return new Response(JSON.stringify({ error: "处理对话历史时出错" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     // 4. 使用 Groq 流式生成回答
@@ -443,7 +471,7 @@ ${articleText}`;
       stream = await groq.chat.completions.create({
         messages: [
           { role: "system", content: promptData.system },
-          ...promptData.messages.map((m) => ({
+          ...promptData.messages.map(m => ({
             role: m.role as "user" | "assistant",
             content: m.content,
           })),
@@ -457,8 +485,8 @@ ${articleText}`;
     } catch (error) {
       console.error("Groq API 调用失败:", error);
       return new Response(
-        JSON.stringify({ 
-          error: error instanceof Error ? error.message : "AI 生成回答时出错" 
+        JSON.stringify({
+          error: error instanceof Error ? error.message : "AI 生成回答时出错",
         }),
         {
           status: 500,
@@ -476,7 +504,7 @@ ${articleText}`;
           if (similarDocs.length > 0) {
             const sourcesData = JSON.stringify({
               type: "sources",
-              sources: similarDocs.map((doc) => ({
+              sources: similarDocs.map(doc => ({
                 title: doc.title,
                 source: doc.source,
                 similarity: Math.round(doc.similarity * 100),
@@ -523,20 +551,18 @@ ${articleText}`;
     });
   } catch (error) {
     console.error("Chat API 未捕获的错误:", error);
-    
+
     // 确保返回有效的 JSON
-    const errorMessage = error instanceof Error ? error.message : "服务器内部错误";
+    const errorMessage =
+      error instanceof Error ? error.message : "服务器内部错误";
     const errorResponse = {
       error: errorMessage,
       details: error instanceof Error ? error.stack : String(error),
     };
-    
-    return new Response(
-      JSON.stringify(errorResponse),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+
+    return new Response(JSON.stringify(errorResponse), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 };
