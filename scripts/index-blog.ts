@@ -2,9 +2,14 @@
 
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { sql } from "@vercel/postgres";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { createClient, sql, type VercelClientBase } from "@vercel/postgres";
+import { GoogleGenAI } from "@google/genai";
 import matter from "gray-matter";
+import {
+  EMBEDDING_MODEL,
+  EMBEDDING_VERSION,
+  embedDocument,
+} from "../src/lib/gemini-embedding";
 
 // 🎉 完全免费方案：Google Gemini Embedding + Neon PostgreSQL
 // 1. Google Gemini 提供免费的嵌入模型 API（每分钟 1500 次请求）
@@ -21,27 +26,27 @@ interface Document {
 
 // 使用 Google Gemini Embedding API（完全免费，质量高）
 class GeminiEmbedding {
-  private genAI: GoogleGenerativeAI;
-  private model: string;
+  private genAI: GoogleGenAI;
 
-  constructor(apiKey: string, model = "text-embedding-004") {
-    this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = model;
+  constructor(apiKey: string) {
+    this.genAI = new GoogleGenAI({ apiKey });
   }
 
-  async getEmbedding(text: string): Promise<number[]> {
-    const model = this.genAI.getGenerativeModel({ model: this.model });
-    const result = await model.embedContent(text);
-    return result.embedding.values;
+  async getEmbedding(text: string, title?: string): Promise<number[]> {
+    return embedDocument(this.genAI, text, title);
   }
 
-  async getEmbeddings(texts: string[], skipIndices: Set<number> = new Set()): Promise<number[][]> {
-    console.log(`  使用 Gemini ${this.model} 模型（768 维向量）`);
-    
+  async getEmbeddings(
+    texts: string[],
+    titles: string[],
+    skipIndices: Set<number> = new Set()
+  ): Promise<number[][]> {
+    console.log(`  使用 Gemini ${EMBEDDING_MODEL} 模型（768 维向量）`);
+
     const embeddings: number[][] = [];
     let processedCount = 0;
     const totalToProcess = texts.length - skipIndices.size;
-    
+
     // Gemini 批量处理能力强，但为了稳定性还是逐个处理
     for (let i = 0; i < texts.length; i++) {
       // 跳过未修改的文档
@@ -49,25 +54,25 @@ class GeminiEmbedding {
         embeddings.push([]); // 占位，稍后会被替换
         continue;
       }
-      
+
       processedCount++;
       console.log(`  处理嵌入 ${processedCount}/${totalToProcess}...`);
-      
+
       try {
-        const embedding = await this.getEmbedding(texts[i]);
+        const embedding = await this.getEmbedding(texts[i], titles[i]);
         embeddings.push(embedding);
-        
+
         // Gemini 免费版速率限制：1500 请求/分钟，很宽松
         // 为保险起见，添加小延迟
         if (processedCount < totalToProcess && processedCount % 10 === 0) {
-          await new Promise((resolve) => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
       } catch (error) {
         console.error(`  ❌ 处理第 ${i + 1} 个文档时出错:`, error);
         throw error;
       }
     }
-    
+
     return embeddings;
   }
 }
@@ -83,8 +88,10 @@ async function loadSiteConfigDocuments(): Promise<Document[]> {
   try {
     // 动态导入配置文件
     const configModule = await import(join(projectRoot, "src", "config.ts"));
-    const constantsModule = await import(join(projectRoot, "src", "constants.ts"));
-    
+    const constantsModule = await import(
+      join(projectRoot, "src", "constants.ts")
+    );
+
     const SITE = configModule.SITE;
     const PROFILE = constantsModule.PROFILE;
     const SOCIALS = constantsModule.SOCIALS;
@@ -113,13 +120,13 @@ async function loadSiteConfigDocuments(): Promise<Document[]> {
 阅读方向：${SITE.dir}
 
 ## 网站功能特性
-- 主题模式：${SITE.lightAndDarkMode ? '支持亮色/暗色主题切换，可以在明暗模式间自由切换' : '不支持主题切换'}
+- 主题模式：${SITE.lightAndDarkMode ? "支持亮色/暗色主题切换，可以在明暗模式间自由切换" : "不支持主题切换"}
 - 分页设置：每页显示 ${SITE.postPerPage} 篇文章
 - 首页文章：首页展示 ${SITE.postPerIndex} 篇文章
-- 文章归档：${SITE.showArchives ? '提供文章归档页面，可以按时间查看所有文章' : '不提供文章归档'}
-- 导航按钮：${SITE.showBackButton ? '显示返回按钮，方便导航' : '不显示返回按钮'}
-- 编辑功能：${SITE.editPost.enabled ? `支持在线编辑页面（编辑按钮文本：${SITE.editPost.text}）` : '不支持在线编辑'}
-- OG 图片：${SITE.dynamicOgImage ? '支持动态生成 Open Graph 社交媒体预览图片' : '不支持动态 OG 图片'}
+- 文章归档：${SITE.showArchives ? "提供文章归档页面，可以按时间查看所有文章" : "不提供文章归档"}
+- 导航按钮：${SITE.showBackButton ? "显示返回按钮，方便导航" : "不显示返回按钮"}
+- 编辑功能：${SITE.editPost.enabled ? `支持在线编辑页面（编辑按钮文本：${SITE.editPost.text}）` : "不支持在线编辑"}
+- OG 图片：${SITE.dynamicOgImage ? "支持动态生成 Open Graph 社交媒体预览图片" : "不支持动态 OG 图片"}
 
 ## 常见问题
 Q: 这个网站是谁的博客？
@@ -129,17 +136,20 @@ Q: 网站地址是什么？
 A: ${SITE.website}
 
 Q: 网站支持哪些功能？
-A: 支持文章发布、${SITE.lightAndDarkMode ? '主题切换、' : ''}${SITE.showArchives ? '文章归档、' : ''}分页浏览等功能。
+A: 支持文章发布、${SITE.lightAndDarkMode ? "主题切换、" : ""}${SITE.showArchives ? "文章归档、" : ""}分页浏览等功能。
       `.trim(),
       source: "config.ts",
     };
 
     // 2. 作者信息文档（优化：强化"关于作者"关键词）
-    const socialLinks = SOCIALS.map((s: typeof SOCIALS[0]) => `- ${s.name}: ${s.href}`).join('\n');
-    const educationInfo = EDUCATION.map((edu: typeof EDUCATION[0]) => 
-      `- ${edu.school}（${edu.start} - ${edu.end}）\n  ${edu.description}`
-    ).join('\n');
-    
+    const socialLinks = SOCIALS.map(
+      (s: (typeof SOCIALS)[0]) => `- ${s.name}: ${s.href}`
+    ).join("\n");
+    const educationInfo = EDUCATION.map(
+      (edu: (typeof EDUCATION)[0]) =>
+        `- ${edu.school}（${edu.start} - ${edu.end}）\n  ${edu.description}`
+    ).join("\n");
+
     const authorDoc: Document = {
       id: "author-profile",
       title: "关于作者的信息和个人简介",
@@ -149,7 +159,7 @@ A: 支持文章发布、${SITE.lightAndDarkMode ? '主题切换、' : ''}${SITE.
 # 关于 ${SITE.author} 的个人简介
 
 ## 个人简介
-${PROFILE.aboutMe.replace(/<\/?mark>/g, '')}
+${PROFILE.aboutMe.replace(/<\/?mark>/g, "")}
 
 ## 职业信息
 当前职位：${PROFILE.synopsis}
@@ -168,22 +178,27 @@ ${educationInfo}
 ## 常见问题
 
 Q: 关于作者的信息有哪些？
-A: 关于作者 ${SITE.author} 的信息包括：职业是 ${PROFILE.synopsis}，教育背景是 ${EDUCATION.map((edu: typeof EDUCATION[0]) => edu.school).join('、')}，可以通过 ${SOCIALS.map((s: typeof SOCIALS[0]) => s.name).join('、')} 联系。
+A: 关于作者 ${SITE.author} 的信息包括：职业是 ${PROFILE.synopsis}，教育背景是 ${EDUCATION.map((edu: (typeof EDUCATION)[0]) => edu.school).join("、")}，可以通过 ${SOCIALS.map((s: (typeof SOCIALS)[0]) => s.name).join("、")} 联系。
 
 Q: 作者是谁？
 A: 作者是 ${SITE.author}，职业：${PROFILE.synopsis}
 
 Q: 如何联系作者？
-A: 可以通过 ${SOCIALS.map((s: typeof SOCIALS[0]) => s.name).join('、')} 等方式联系作者。
+A: 可以通过 ${SOCIALS.map((s: (typeof SOCIALS)[0]) => s.name).join("、")} 等方式联系作者。
 
 Q: 作者的教育背景如何？
-A: 作者毕业于 ${EDUCATION.map((edu: typeof EDUCATION[0]) => edu.school).join('、')}。
+A: 作者毕业于 ${EDUCATION.map((edu: (typeof EDUCATION)[0]) => edu.school).join("、")}。
 
 Q: 在哪里可以看到作者的简历？
 A: 作者的在线简历：${PROFILE.resume}
 
 Q: 告诉我关于作者的详细信息？
-A: 关于作者的详细信息：${SITE.author} 是一位 ${PROFILE.synopsis}，毕业于 ${EDUCATION.map((edu: typeof EDUCATION[0]) => edu.school).join('、')}，联系方式包括 ${SOCIALS.slice(0, 2).map((s: typeof SOCIALS[0]) => s.name).join('和')}。
+A: 关于作者的详细信息：${SITE.author} 是一位 ${PROFILE.synopsis}，毕业于 ${EDUCATION.map((edu: (typeof EDUCATION)[0]) => edu.school).join("、")}，联系方式包括 ${SOCIALS.slice(
+        0,
+        2
+      )
+        .map((s: (typeof SOCIALS)[0]) => s.name)
+        .join("和")}。
 
 关键词：关于作者、作者信息、作者简介、个人资料、联系作者、author profile、about me
       `.trim(),
@@ -191,9 +206,11 @@ A: 关于作者的详细信息：${SITE.author} 是一位 ${PROFILE.synopsis}，
     };
 
     // 3. 技能栈文档（优化：大幅增加关键词和问答）
-    const skillsList = SKILLS.map((s: typeof SKILLS[0]) => s.name);
-    const skillsText = SKILLS.map((s: typeof SKILLS[0]) => `- ${s.name}`).join('\n');
-    
+    const skillsList = SKILLS.map((s: (typeof SKILLS)[0]) => s.name);
+    const skillsText = SKILLS.map(
+      (s: (typeof SKILLS)[0]) => `- ${s.name}`
+    ).join("\n");
+
     const skillsDoc: Document = {
       id: "skills-stack",
       title: "技能栈技术栈编程技能",
@@ -212,7 +229,7 @@ ${skillsText}
 - 完整技能：${skillsList.join("、")}
 
 ### 技术栈详情
-${SKILLS.map((s: typeof SKILLS[0], idx: number) => `${idx + 1}. ${s.name}`).join('\n')}
+${SKILLS.map((s: (typeof SKILLS)[0], idx: number) => `${idx + 1}. ${s.name}`).join("\n")}
 
 ## 常见问题
 
@@ -226,7 +243,7 @@ Q: 掌握什么技术？
 A: 掌握的技术栈包括：${skillsList.join("、")}。
 
 Q: 会使用哪些框架和工具？
-A: 技术栈涵盖了编程语言、框架和工具，包括 ${skillsList.slice(0, Math.min(5, skillsList.length)).join("、")}${skillsList.length > 5 ? '等' : ''}。
+A: 技术栈涵盖了编程语言、框架和工具，包括 ${skillsList.slice(0, Math.min(5, skillsList.length)).join("、")}${skillsList.length > 5 ? "等" : ""}。
 
 Q: 技术能力如何？
 A: ${SITE.author} 掌握 ${SKILLS.length} 项技术技能，包括${skillsList.slice(0, 3).join("、")}等多种编程语言和框架。
@@ -237,20 +254,25 @@ A: ${SITE.author} 掌握 ${SKILLS.length} 项技术技能，包括${skillsList.s
     };
 
     // 4. 项目文档（强化优化：明确区分项目和博客）
-    const projectsText = PROJECTS.map((proj: typeof PROJECTS[0], index: number) => `
+    const projectsText = PROJECTS.map(
+      (proj: (typeof PROJECTS)[0], index: number) =>
+        `
 ### 项目 ${index + 1}：${proj.title}
 - 项目名称：${proj.title}
 - 项目链接：${proj.href}
 - 技术栈：${proj.tags}
 - 项目简介：${proj.desc}
 - GitHub 地址：${proj.github}
-- 开发状态：${proj.wip ? '正在开发中 (Work In Progress)' : '已完成上线'}
-    `.trim()).join('\n\n');
-    
-    const completedProjects = PROJECTS.filter((p: typeof PROJECTS[0]) => !p.wip);
-    const wipProjects = PROJECTS.filter((p: typeof PROJECTS[0]) => p.wip);
-    const projectNames = PROJECTS.map((p: typeof PROJECTS[0]) => p.title);
-    
+- 开发状态：${proj.wip ? "正在开发中 (Work In Progress)" : "已完成上线"}
+    `.trim()
+    ).join("\n\n");
+
+    const completedProjects = PROJECTS.filter(
+      (p: (typeof PROJECTS)[0]) => !p.wip
+    );
+    const wipProjects = PROJECTS.filter((p: (typeof PROJECTS)[0]) => p.wip);
+    const projectNames = PROJECTS.map((p: (typeof PROJECTS)[0]) => p.title);
+
     const projectsDoc: Document = {
       id: "projects-list",
       title: "开发项目列表和作品集",
@@ -270,10 +292,10 @@ ${projectsText}
 - 重要提示：这些是实际的开发项目和作品，不是博客文章
 
 ## 已完成并上线的项目
-${completedProjects.length > 0 ? completedProjects.map((p: typeof PROJECTS[0]) => `- 项目《${p.title}》：${p.desc} (${p.href})`).join('\n') : '暂无'}
+${completedProjects.length > 0 ? completedProjects.map((p: (typeof PROJECTS)[0]) => `- 项目《${p.title}》：${p.desc} (${p.href})`).join("\n") : "暂无"}
 
 ## 正在开发中的项目
-${wipProjects.length > 0 ? wipProjects.map((p: typeof PROJECTS[0]) => `- 项目《${p.title}》：${p.desc} (开发中)`).join('\n') : '暂无'}
+${wipProjects.length > 0 ? wipProjects.map((p: (typeof PROJECTS)[0]) => `- 项目《${p.title}》：${p.desc} (开发中)`).join("\n") : "暂无"}
 
 ## 常见问题（关于开发项目）
 
@@ -293,10 +315,14 @@ Q: 项目作品有哪些？
 A: 项目作品包括 ${PROJECTS.length} 个：${projectNames.join("、")}。
 
 Q: 有哪些开源项目作品？
-A: GitHub 上的开源项目作品包括：${PROJECTS.filter((p: typeof PROJECTS[0]) => p.github).map((p: typeof PROJECTS[0]) => p.title).join("、")}。
+A: GitHub 上的开源项目作品包括：${PROJECTS.filter(
+        (p: (typeof PROJECTS)[0]) => p.github
+      )
+        .map((p: (typeof PROJECTS)[0]) => p.title)
+        .join("、")}。
 
 Q: 这些项目使用了什么技术？
-A: 项目开发使用的技术栈包括：${[...new Set(PROJECTS.flatMap((p: typeof PROJECTS[0]) => p.tags.split(/[,，、]/).map((t: string) => t.trim())))].join("、")}等技术。
+A: 项目开发使用的技术栈包括：${[...new Set(PROJECTS.flatMap((p: (typeof PROJECTS)[0]) => p.tags.split(/[,，、]/).map((t: string) => t.trim())))].join("、")}等技术。
 
 Q: 项目列表是什么？
 A: 项目列表共有 ${PROJECTS.length} 个开发项目：${projectNames.join("、")}。
@@ -313,7 +339,7 @@ A: 项目列表共有 ${PROJECTS.length} 个开发项目：${projectNames.join("
 
     documents.push(siteInfoDoc, authorDoc, skillsDoc, projectsDoc);
     console.log(`✅ 共加载 ${documents.length} 个网站配置文档`);
-    
+
     for (const doc of documents) {
       console.log(`📄 加载配置: ${doc.id} - ${doc.title}`);
       console.log(`   描述: ${doc.description.substring(0, 60)}...`);
@@ -328,8 +354,10 @@ A: 项目列表共有 ${PROJECTS.length} 个开发项目：${projectNames.join("
 }
 
 async function loadDocuments(): Promise<Document[]> {
-  console.log("📚 使用 gray-matter 加载博客文章（与 Astro schema 保持一致）...");
-  
+  console.log(
+    "📚 使用 gray-matter 加载博客文章（与 Astro schema 保持一致）..."
+  );
+
   const postsDir = join(projectRoot, "src", "data", "blog");
 
   try {
@@ -358,7 +386,7 @@ async function loadDocuments(): Promise<Document[]> {
 
         // 在标题和描述中明确标注这是博客文章，帮助区分项目
         const document: Document = {
-          id: file.replace(/\.mdx?$/, ''),
+          id: file.replace(/\.mdx?$/, ""),
           title: `博客文章：${frontmatter.title}`,
           description: `这是一篇博客文章（不是项目）：${frontmatter.description || ""}`,
           text: `这是一篇博客文章的内容：\n\n${content}`, // 明确标注是博客文章
@@ -387,15 +415,16 @@ async function initDatabase() {
   // 创建 pgvector 扩展
   await sql`CREATE EXTENSION IF NOT EXISTS vector`;
 
-  // 创建文档表（768 维度是 Gemini text-embedding-004 模型的输出维度）
+  // 保持 768 维，兼容现有 pgvector 列定义
   await sql`
-    CREATE TABLE IF NOT EXISTS blog_embeddings (
+    CREATE TABLE IF NOT EXISTS blog_embeddings_v2 (
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
       description TEXT DEFAULT '',
       source TEXT NOT NULL,
       text TEXT NOT NULL,
       embedding vector(768) NOT NULL,
+      embedding_model TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `;
@@ -403,20 +432,20 @@ async function initDatabase() {
   // 如果表已存在但没有 description 字段，添加它
   try {
     await sql`
-      ALTER TABLE blog_embeddings 
+      ALTER TABLE blog_embeddings_v2
       ADD COLUMN IF NOT EXISTS description TEXT DEFAULT ''
     `;
   } catch {
     // 忽略错误（列可能已存在）
   }
 
-  // 创建向量索引以加速搜索
   await sql`
-    CREATE INDEX IF NOT EXISTS blog_embeddings_vector_idx 
-    ON blog_embeddings 
-    USING ivfflat (embedding vector_cosine_ops)
-    WITH (lists = 100)
+    ALTER TABLE blog_embeddings_v2
+    ADD COLUMN IF NOT EXISTS embedding_model TEXT
   `;
+
+  // 当前语料规模很小，精确余弦扫描比 IVFFlat 更可靠。
+  await sql`DROP INDEX IF EXISTS blog_embeddings_v2_vector_idx`;
 
   console.log("✅ 数据库表已就绪（768 维向量）");
 }
@@ -432,56 +461,81 @@ async function storeEmbeddings(
   let updatedCount = 0;
   let skippedCount = 0;
 
-  for (let i = 0; i < documents.length; i++) {
-    const doc = documents[i];
-    const embedding = embeddings[i];
+  const client = createClient();
+  await client.connect();
+
+  try {
+    await client.sql`BEGIN`;
+
+    for (let i = 0; i < documents.length; i++) {
+      const doc = documents[i];
+      const embedding = embeddings[i];
 
     // 跳过未修改的文档（不需要更新数据库）
-    if (skipIndices.has(i)) {
-      skippedCount++;
-      console.log(`  ⏭️  跳过（未修改）: ${doc.title}`);
-      continue;
-    }
+      if (skipIndices.has(i)) {
+        skippedCount++;
+        console.log(`  ⏭️  跳过（未修改）: ${doc.title}`);
+        continue;
+      }
 
     // 检查是新增还是更新（用于统计）
-    const existing = await sql`
-      SELECT id FROM blog_embeddings WHERE id = ${doc.id}
-    `;
-    const isNew = !existing.rowCount || existing.rowCount === 0;
+      const existing = await client.sql`
+        SELECT id FROM blog_embeddings_v2 WHERE id = ${doc.id}
+      `;
+      const isNew = !existing.rowCount || existing.rowCount === 0;
 
     // Upsert 文档（如果存在则更新）
-    await sql`
-      INSERT INTO blog_embeddings (id, title, description, source, text, embedding)
-      VALUES (
-        ${doc.id},
-        ${doc.title},
-        ${doc.description},
-        ${doc.source},
-        ${doc.text},
-        ${JSON.stringify(embedding)}::vector
-      )
-      ON CONFLICT (id) 
-      DO UPDATE SET
-        title = EXCLUDED.title,
-        description = EXCLUDED.description,
-        text = EXCLUDED.text,
-        embedding = EXCLUDED.embedding,
-        created_at = CURRENT_TIMESTAMP
-    `;
+      await client.sql`
+        INSERT INTO blog_embeddings_v2 (id, title, description, source, text, embedding, embedding_model)
+        VALUES (
+          ${doc.id},
+          ${doc.title},
+          ${doc.description},
+          ${doc.source},
+          ${doc.text},
+          ${JSON.stringify(embedding)}::vector,
+          ${EMBEDDING_VERSION}
+        )
+        ON CONFLICT (id)
+        DO UPDATE SET
+          title = EXCLUDED.title,
+          description = EXCLUDED.description,
+          text = EXCLUDED.text,
+          embedding = EXCLUDED.embedding,
+          embedding_model = EXCLUDED.embedding_model,
+          created_at = CURRENT_TIMESTAMP
+      `;
 
-    if (isNew) {
-      newCount++;
-      console.log(`  ✅ 新增: ${doc.title}`);
-    } else {
-      updatedCount++;
-      console.log(`  🔄 更新: ${doc.title}`);
+      if (isNew) {
+        newCount++;
+        console.log(`  ✅ 新增: ${doc.title}`);
+      } else {
+        updatedCount++;
+        console.log(`  🔄 更新: ${doc.title}`);
+      }
     }
+
+    await cleanupDeletedDocuments(
+      documents.map(doc => doc.id),
+      client
+    );
+    await client.sql`COMMIT`;
+  } catch (error) {
+    await client.sql`ROLLBACK`;
+    throw error;
+  } finally {
+    await client.end();
   }
 
-  console.log(`\n📊 处理统计：新增 ${newCount} 篇，更新 ${updatedCount} 篇，跳过 ${skippedCount} 篇`);
+  console.log(
+    `\n📊 处理统计：新增 ${newCount} 篇，更新 ${updatedCount} 篇，跳过 ${skippedCount} 篇`
+  );
 }
 
-async function cleanupDeletedDocuments(currentDocIds: string[]) {
+async function cleanupDeletedDocuments(
+  currentDocIds: string[],
+  client: VercelClientBase
+) {
   console.log("\n🧹 清理已删除的文章...");
 
   if (currentDocIds.length === 0) {
@@ -490,10 +544,12 @@ async function cleanupDeletedDocuments(currentDocIds: string[]) {
   }
 
   // 获取所有数据库中的文档
-  const allDocs = await sql`SELECT id, title FROM blog_embeddings`;
-  
+  const allDocs = await client.sql`SELECT id, title FROM blog_embeddings_v2`;
+
   // 找出需要删除的文档
-  const toDelete = allDocs.rows.filter((row) => !currentDocIds.includes(row.id as string));
+  const toDelete = allDocs.rows.filter(
+    row => !currentDocIds.includes(row.id as string)
+  );
 
   if (toDelete.length === 0) {
     console.log("  ✓ 没有需要清理的文档");
@@ -504,7 +560,7 @@ async function cleanupDeletedDocuments(currentDocIds: string[]) {
   for (const doc of toDelete) {
     console.log(`    - ${doc.title}`);
     // 逐个删除
-    await sql`DELETE FROM blog_embeddings WHERE id = ${doc.id}`;
+    await client.sql`DELETE FROM blog_embeddings_v2 WHERE id = ${doc.id}`;
   }
 
   console.log(`  ✅ 已清理 ${toDelete.length} 篇已删除的文章`);
@@ -516,7 +572,7 @@ async function main() {
   // 检查命令行参数
   const args = process.argv.slice(2);
   const forceReindex = args.includes("--force") || args.includes("-f");
-  
+
   if (forceReindex) {
     console.log("⚠️  强制重新索引模式：将重新生成所有文档的向量");
   }
@@ -527,7 +583,9 @@ async function main() {
 
   if (!GEMINI_API_KEY) {
     console.error("❌ 缺少 GEMINI_API_KEY 环境变量");
-    console.error("💡 获取免费 API Key：https://aistudio.google.com/app/apikey");
+    console.error(
+      "💡 获取免费 API Key：https://aistudio.google.com/app/apikey"
+    );
     console.error("💡 然后在 .env.local 添加：GEMINI_API_KEY=你的密钥");
     process.exit(1);
   }
@@ -544,13 +602,15 @@ async function main() {
 
   // 加载博客文章
   const blogDocuments = await loadDocuments();
-  
+
   // 加载网站配置信息
   const configDocuments = await loadSiteConfigDocuments();
-  
+
   // 合并所有文档
   const documents = [...blogDocuments, ...configDocuments];
-  console.log(`\n📦 总计 ${documents.length} 个文档（${blogDocuments.length} 篇文章 + ${configDocuments.length} 个配置）`);
+  console.log(
+    `\n📦 总计 ${documents.length} 个文档（${blogDocuments.length} 篇文章 + ${configDocuments.length} 个配置）`
+  );
 
   if (documents.length === 0) {
     console.warn("⚠️  没有找到任何 .md/.mdx 文件，请检查目录路径。");
@@ -563,18 +623,22 @@ async function main() {
 
   if (!forceReindex) {
     console.log("\n🔍 检查需要更新的文档...");
-    
+
     for (let i = 0; i < documents.length; i++) {
       const doc = documents[i];
       const existing = await sql`
-        SELECT title, description, text, embedding FROM blog_embeddings WHERE id = ${doc.id}
+        SELECT title, description, text, embedding, embedding_model FROM blog_embeddings_v2 WHERE id = ${doc.id}
       `;
 
       // 检查标题、描述和正文是否都未修改
-      if (existing.rowCount && existing.rowCount > 0 && 
-          existing.rows[0].text === doc.text && 
-          existing.rows[0].title === doc.title &&
-          existing.rows[0].description === doc.description) {
+      if (
+        existing.rowCount &&
+        existing.rowCount > 0 &&
+        existing.rows[0].text === doc.text &&
+        existing.rows[0].title === doc.title &&
+        existing.rows[0].description === doc.description &&
+        existing.rows[0].embedding_model === EMBEDDING_VERSION
+      ) {
         // 文档未修改，跳过嵌入生成
         skipIndices.add(i);
         existingEmbeddings.set(i, JSON.parse(existing.rows[0].embedding));
@@ -584,7 +648,9 @@ async function main() {
     console.log("\n⚡ 跳过增量检查，将重新生成所有向量...");
   }
 
-  console.log(`  需要处理：${documents.length - skipIndices.size}/${documents.length} 篇文章`);
+  console.log(
+    `  需要处理：${documents.length - skipIndices.size}/${documents.length} 篇文章`
+  );
   if (skipIndices.size > 0) {
     console.log(`  跳过未修改：${skipIndices.size} 篇`);
   }
@@ -595,15 +661,19 @@ async function main() {
 
   console.log("🔄 正在生成向量嵌入（完全免费，仅处理新的/修改的文档）...");
   // 将标题、描述和正文组合在一起，提高搜索准确度
-  const texts = documents.map((doc) => {
-    const parts = [doc.title];
+  const texts = documents.map(doc => {
+    const parts: string[] = [];
     if (doc.description) {
       parts.push(doc.description);
     }
     parts.push(doc.text);
     return parts.join("\n\n");
   });
-  const embeddings = await embedder.getEmbeddings(texts, skipIndices);
+  const embeddings = await embedder.getEmbeddings(
+    texts,
+    documents.map(doc => doc.title),
+    skipIndices
+  );
 
   // 用已存在的嵌入填充跳过的文档
   for (const [index, embedding] of existingEmbeddings) {
@@ -613,14 +683,12 @@ async function main() {
   // 保存到 Neon 数据库
   await storeEmbeddings(documents, embeddings, skipIndices);
 
-  // 清理已删除的文档
-  const currentDocIds = documents.map((doc) => doc.id);
-  await cleanupDeletedDocuments(currentDocIds);
-
   console.log("\n🎉 成功！你的博客内容已全部转化为 AI 可搜索的知识库！");
   console.log("📊 统计信息：");
   console.log(`  - 文档数量: ${documents.length}`);
-  console.log(`  - 向量维度: ${embeddings[0]?.length || 0} (Gemini text-embedding-004)`);
+  console.log(
+    `  - 向量维度: ${embeddings[0]?.length || 0} (Gemini ${EMBEDDING_MODEL})`
+  );
   console.log(`  - 存储位置: Neon PostgreSQL`);
   console.log("\n💡 提示：");
   console.log("  - 后续可以使用 Gemini/Groq 做 AI 对话");
@@ -629,7 +697,7 @@ async function main() {
   console.log("  - 强制重建：bun run index-blog --force");
 }
 
-main().catch((err) => {
+main().catch(err => {
   console.error("❌ 构建过程出错：", err);
   process.exit(1);
 });

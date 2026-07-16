@@ -1,8 +1,9 @@
 // src/pages/api/chat.ts
 import type { APIRoute } from "astro";
 import { sql } from "@vercel/postgres";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import Groq from "groq-sdk";
+import { EMBEDDING_VERSION, embedQuery } from "@/lib/gemini-embedding";
 
 // 标记为服务器端渲染（必需）
 export const prerender = false;
@@ -38,11 +39,12 @@ async function getQueryEmbedding(
   console.log(
     `🔍 正在将问题转换为向量: "${query.substring(0, 50)}${query.length > 50 ? "..." : ""}"`
   );
-  const genAI = new GoogleGenerativeAI(geminiKey);
-  const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
-  const result = await model.embedContent(query);
-  console.log(`✅ 向量维度: ${result.embedding.values.length}`);
-  return result.embedding.values;
+  const embedding = await embedQuery(
+    new GoogleGenAI({ apiKey: geminiKey }),
+    query
+  );
+  console.log(`✅ 向量维度: ${embedding.length}`);
+  return embedding;
 }
 
 // 向量搜索相似文档（优化：进一步降低阈值）
@@ -52,6 +54,14 @@ async function searchSimilarDocs(
   minSimilarity: number = 0.25 // 进一步降低阈值到0.25（25%）
 ): Promise<SearchResult[]> {
   const embeddingString = JSON.stringify(embedding);
+  const tableStatus = await sql`
+    SELECT to_regclass('public.blog_embeddings_v2') IS NOT NULL AS exists
+  `;
+
+  if (!tableStatus.rows[0]?.exists) {
+    console.warn("⚠️ 新版向量索引尚未就绪，跳过文档检索");
+    return [];
+  }
 
   // 先获取所有结果看看相似度分布
   const allResults = await sql`
@@ -61,7 +71,8 @@ async function searchSimilarDocs(
       text,
       description,
       1 - (embedding <=> ${embeddingString}::vector) as similarity
-    FROM blog_embeddings
+    FROM blog_embeddings_v2
+    WHERE embedding_model = ${EMBEDDING_VERSION}
     ORDER BY embedding <=> ${embeddingString}::vector
     LIMIT 10
   `;
@@ -100,6 +111,32 @@ function truncateForSummary(text: string, maxChars: number = 16000): string {
 }
 
 async function getDocById(id: string) {
+  const tableStatus = await sql`
+    SELECT to_regclass('public.blog_embeddings_v2') IS NOT NULL AS exists
+  `;
+  if (tableStatus.rows[0]?.exists) {
+    const v2Rows = await sql`
+      SELECT id, title, source, description, text
+      FROM blog_embeddings_v2
+      WHERE id = ${id} AND embedding_model = ${EMBEDDING_VERSION}
+      LIMIT 1
+    `;
+    if (v2Rows.rows[0]) {
+      return v2Rows.rows[0] as {
+        id: string;
+        title: string;
+        source: string;
+        description: string | null;
+        text: string;
+      };
+    }
+  }
+
+  const legacyTableStatus = await sql`
+    SELECT to_regclass('public.blog_embeddings') IS NOT NULL AS exists
+  `;
+  if (!legacyTableStatus.rows[0]?.exists) return undefined;
+
   const rows = await sql`
     SELECT id, title, source, description, text
     FROM blog_embeddings
