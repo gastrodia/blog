@@ -239,7 +239,7 @@
     background: rgba(0, 0, 0, 0.1);
   }
 
-  :global(.dark) .chat-md-content code {
+  .dark .chat-md-content code {
     background: rgba(255, 255, 255, 0.1);
   }
 
@@ -249,7 +249,7 @@
     background: #f6f8fa !important;
   }
 
-  :global(.dark) .chat-md-content pre {
+  .dark .chat-md-content pre {
     @apply border-white/10;
     background: #161b22 !important;
   }
@@ -274,7 +274,7 @@
     background: rgba(0, 0, 0, 0.03);
   }
 
-  :global(.dark) .chat-md-content blockquote {
+  .dark .chat-md-content blockquote {
     background: rgba(255, 255, 255, 0.03);
   }
 
@@ -312,11 +312,11 @@
   }
 
   /* Shiki 代码高亮 */
-  .chat-md-content :global(.shiki) {
+  .chat-md-content .shiki {
     @apply my-3 overflow-x-auto rounded-md p-3 text-sm leading-normal;
   }
 
-  .chat-md-content :global(.shiki code) {
+  .chat-md-content .shiki code {
     @apply bg-transparent p-0;
   }
 }
