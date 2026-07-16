@@ -170,7 +170,7 @@ const { file, fileName } = Astro.props;
         const isPdfChanged = this.currentPdfUrl !== pdfUrl;
         if (isPdfChanged && this.cachedPdf) {
           // 释放旧的 PDF 资源
-          this.cachedPdf.destroy();
+          await this.cachedPdf.loadingTask.destroy();
           this.cachedPdf = null;
         }
         this.currentPdfUrl = pdfUrl;
@@ -205,14 +205,14 @@ const { file, fileName } = Astro.props;
       this.cancelCurrentRenders();
       clearTimeout(this.resizeTimeout);
       if (this.cachedPdf) {
-        this.cachedPdf.destroy();
+        void this.cachedPdf.loadingTask.destroy();
         this.cachedPdf = null;
       }
       this.currentPdfUrl = null;
     }
 
     private async loadPDF(url: string): Promise<PDFDocumentProxy> {
-      const loadingTask = pdfjsLib.getDocument(url);
+      const loadingTask = pdfjsLib.getDocument({ url });
       return await loadingTask.promise;
     }
 
