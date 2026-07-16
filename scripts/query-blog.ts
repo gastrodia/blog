@@ -8,6 +8,7 @@ import {
   EMBEDDING_VERSION,
   embedQuery,
 } from "../src/lib/gemini-embedding";
+import { GROQ_CHAT_MODEL } from "../src/lib/groq";
 
 // RAG（检索增强生成）问答系统
 //
@@ -117,7 +118,7 @@ ${contextText}
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      model: "llama-3.3-70b-versatile", // 或 "mixtral-8x7b-32768"
+      model: GROQ_CHAT_MODEL,
       temperature: 0.7,
       max_tokens: 1024,
     });

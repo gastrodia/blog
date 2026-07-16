@@ -4,6 +4,7 @@ import { sql } from "@vercel/postgres";
 import { GoogleGenAI } from "@google/genai";
 import Groq from "groq-sdk";
 import { EMBEDDING_VERSION, embedQuery } from "@/lib/gemini-embedding";
+import { GROQ_CHAT_MODEL } from "@/lib/groq";
 
 // 标记为服务器端渲染（必需）
 export const prerender = false;
@@ -379,7 +380,7 @@ ${articleText}`;
           { role: "system", content: summarySystemPrompt },
           { role: "user", content: summaryUserPrompt },
         ],
-        model: "llama-3.3-70b-versatile",
+        model: GROQ_CHAT_MODEL,
         temperature: 0.2,
         max_tokens: 1024,
         top_p: 0.9,
@@ -513,7 +514,7 @@ ${articleText}`;
             content: m.content,
           })),
         ],
-        model: "llama-3.3-70b-versatile",
+        model: GROQ_CHAT_MODEL,
         temperature: 0.3, // 降低温度以减少幻觉（从 0.7 降至 0.3）
         max_tokens: 1024,
         top_p: 0.9, // 添加 top_p 以进一步控制随机性
