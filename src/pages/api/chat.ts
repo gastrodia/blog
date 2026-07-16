@@ -372,6 +372,13 @@ ${articleText}`;
       });
     }
 
+    if (!GEMINI_API_KEY) {
+      return new Response(JSON.stringify({ error: "服务配置错误，请联系管理员" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     // 1. 将问题转为向量
     let queryEmbedding: number[];
     try {
