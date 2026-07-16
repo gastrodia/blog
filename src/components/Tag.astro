@@ -24,10 +24,7 @@ const { tag, tagName, size = "sm" } = Astro.props;
       { "text-sm": size === "sm" },
     ]}
   >
-    <Icon
-      name="Hash"
-      class={["size-4 stroke-2 inline-block opacity-80 -me-2"]}
-    />
+    <Icon name="Hash" class={["size-4 stroke-2 inline-block opacity-80"]} />
     <span>{tagName}</span>
   </a>
 </li>
