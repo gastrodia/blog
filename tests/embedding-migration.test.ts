@@ -6,6 +6,7 @@ import {
   EMBEDDING_MODEL,
   embedQuery,
   embedDocument,
+  embedDocuments,
   prepareEmbeddingDocument,
   prepareEmbeddingQuery,
 } from "../src/lib/gemini-embedding";
@@ -73,6 +74,31 @@ test("embedding changes trigger indexing without a commit-message convention", (
   expect(workflow).toContain("cancel-in-progress: true");
 });
 
+test("indexes changed documents in bounded, resumable batches", () => {
+  const indexScript = readFileSync(join(root, "scripts/index-blog.ts"), "utf8");
+
+  expect(indexScript).toContain("const EMBEDDING_BATCH_SIZE = 10");
+  expect(indexScript).toContain("start += EMBEDDING_BATCH_SIZE");
+  expect(indexScript).toContain("await embedDocuments(");
+  expect(indexScript).toMatch(
+    /await storeEmbeddings\(\s*batchDocuments,\s*batchEmbeddings\s*\)/
+  );
+  expect(indexScript).not.toContain("processedCount % 10");
+
+  const batchLoop = indexScript.indexOf("start += EMBEDDING_BATCH_SIZE");
+  const batchEmbedding = indexScript.indexOf("await embedDocuments(", batchLoop);
+  const batchPersistence = indexScript.indexOf(
+    "await storeEmbeddings(",
+    batchEmbedding
+  );
+  const cleanup = indexScript.indexOf("await cleanupDeletedDocuments(");
+
+  expect(batchLoop).toBeGreaterThan(-1);
+  expect(batchEmbedding).toBeGreaterThan(batchLoop);
+  expect(batchPersistence).toBeGreaterThan(batchEmbedding);
+  expect(cleanup).toBeGreaterThan(batchPersistence);
+});
+
 test("formats asymmetric question-answering inputs for Gemini Embedding 2", () => {
   expect(prepareEmbeddingQuery("作者是谁？")).toBe(
     "task: question answering | query: 作者是谁？"
@@ -123,4 +149,79 @@ test("requests a 768-dimensional document embedding", async () => {
     contents: "title: 标题 | text: 正文",
     config: { outputDimensionality: EMBEDDING_DIMENSIONS },
   });
+});
+
+test("embeds multiple documents in one request and preserves their order", async () => {
+  const first = Array.from({ length: EMBEDDING_DIMENSIONS }, () => 1);
+  const second = Array.from({ length: EMBEDDING_DIMENSIONS }, () => 2);
+  let received: unknown;
+  const client = {
+    models: {
+      embedContent: async (params: unknown) => {
+        received = params;
+        return { embeddings: [{ values: first }, { values: second }] };
+      },
+    },
+  };
+
+  const result = await embedDocuments(client as never, [
+    { text: "正文一", title: "标题一" },
+    { text: "正文二", title: "标题二" },
+  ]);
+
+  expect(received).toEqual({
+    model: EMBEDDING_MODEL,
+    contents: [
+      { parts: [{ text: "title: 标题一 | text: 正文一" }] },
+      { parts: [{ text: "title: 标题二 | text: 正文二" }] },
+    ],
+    config: { outputDimensionality: EMBEDDING_DIMENSIONS },
+  });
+  expect(result).toEqual([first, second]);
+});
+
+test("retries transient batch embedding failures", async () => {
+  const values = Array.from({ length: EMBEDDING_DIMENSIONS }, () => 1);
+  const quotaError = Object.assign(new Error("quota"), { status: 429 });
+  let attempts = 0;
+
+  const client = {
+    models: {
+      embedContent: async () => {
+        attempts++;
+        if (attempts === 1) throw quotaError;
+        return { embeddings: [{ values }] };
+      },
+    },
+  };
+
+  await embedDocuments(
+    client as never,
+    [{ text: "正文", title: "标题" }],
+    { sleep: async () => {}, random: () => 0 }
+  );
+
+  expect(attempts).toBe(2);
+});
+
+test("rejects incomplete batch embedding responses", async () => {
+  const values = Array.from({ length: EMBEDDING_DIMENSIONS }, () => 1);
+  const client = {
+    models: {
+      embedContent: async () => ({ embeddings: [{ values }] }),
+    },
+  };
+
+  let received: unknown;
+  try {
+    await embedDocuments(client as never, [
+      { text: "正文一" },
+      { text: "正文二" },
+    ]);
+  } catch (error) {
+    received = error;
+  }
+
+  expect(received).toBeInstanceOf(Error);
+  expect((received as Error).message).toContain("期望 2 个向量，实际 1 个");
 });

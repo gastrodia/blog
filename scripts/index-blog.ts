@@ -6,15 +6,14 @@ import { createClient, sql, type VercelClientBase } from "@vercel/postgres";
 import { GoogleGenAI } from "@google/genai";
 import matter from "gray-matter";
 import {
+  EMBEDDING_DIMENSIONS,
   EMBEDDING_MODEL,
   EMBEDDING_VERSION,
-  embedDocument,
+  embedDocuments,
 } from "../src/lib/gemini-embedding";
 
-// 🎉 完全免费方案：Google Gemini Embedding + Neon PostgreSQL
-// 1. Google Gemini 提供免费的嵌入模型 API（每分钟 1500 次请求）
-// 2. Neon 提供免费的 PostgreSQL + pgvector
-// 3. Groq 可用于后续的 AI 对话（超快且免费额度大）
+// Google Gemini Embedding + Neon PostgreSQL
+const EMBEDDING_BATCH_SIZE = 10;
 
 interface Document {
   id: string;
@@ -22,59 +21,6 @@ interface Document {
   title: string;
   description: string;
   source: string;
-}
-
-// 使用 Google Gemini Embedding API（完全免费，质量高）
-class GeminiEmbedding {
-  private genAI: GoogleGenAI;
-
-  constructor(apiKey: string) {
-    this.genAI = new GoogleGenAI({ apiKey });
-  }
-
-  async getEmbedding(text: string, title?: string): Promise<number[]> {
-    return embedDocument(this.genAI, text, title);
-  }
-
-  async getEmbeddings(
-    texts: string[],
-    titles: string[],
-    skipIndices: Set<number> = new Set()
-  ): Promise<number[][]> {
-    console.log(`  使用 Gemini ${EMBEDDING_MODEL} 模型（768 维向量）`);
-
-    const embeddings: number[][] = [];
-    let processedCount = 0;
-    const totalToProcess = texts.length - skipIndices.size;
-
-    // Gemini 批量处理能力强，但为了稳定性还是逐个处理
-    for (let i = 0; i < texts.length; i++) {
-      // 跳过未修改的文档
-      if (skipIndices.has(i)) {
-        embeddings.push([]); // 占位，稍后会被替换
-        continue;
-      }
-
-      processedCount++;
-      console.log(`  处理嵌入 ${processedCount}/${totalToProcess}...`);
-
-      try {
-        const embedding = await this.getEmbedding(texts[i], titles[i]);
-        embeddings.push(embedding);
-
-        // Gemini 免费版速率限制：1500 请求/分钟，很宽松
-        // 为保险起见，添加小延迟
-        if (processedCount < totalToProcess && processedCount % 10 === 0) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
-      } catch (error) {
-        console.error(`  ❌ 处理第 ${i + 1} 个文档时出错:`, error);
-        throw error;
-      }
-    }
-
-    return embeddings;
-  }
 }
 
 // 使用 import.meta.dir 获取当前脚本所在目录，然后向上找到项目根
@@ -452,14 +398,12 @@ async function initDatabase() {
 
 async function storeEmbeddings(
   documents: Document[],
-  embeddings: number[][],
-  skipIndices: Set<number>
-) {
-  console.log("\n💾 保存到 Neon 数据库...");
+  embeddings: number[][]
+): Promise<{ newCount: number; updatedCount: number }> {
+  console.log("  💾 保存当前批次到 Neon 数据库...");
 
   let newCount = 0;
   let updatedCount = 0;
-  let skippedCount = 0;
 
   const client = createClient();
   await client.connect();
@@ -471,20 +415,13 @@ async function storeEmbeddings(
       const doc = documents[i];
       const embedding = embeddings[i];
 
-    // 跳过未修改的文档（不需要更新数据库）
-      if (skipIndices.has(i)) {
-        skippedCount++;
-        console.log(`  ⏭️  跳过（未修改）: ${doc.title}`);
-        continue;
-      }
-
-    // 检查是新增还是更新（用于统计）
+      // 检查是新增还是更新（用于统计）
       const existing = await client.sql`
         SELECT id FROM blog_embeddings_v2 WHERE id = ${doc.id}
       `;
       const isNew = !existing.rowCount || existing.rowCount === 0;
 
-    // Upsert 文档（如果存在则更新）
+      // Upsert 文档（如果存在则更新）
       await client.sql`
         INSERT INTO blog_embeddings_v2 (id, title, description, source, text, embedding, embedding_model)
         VALUES (
@@ -515,10 +452,6 @@ async function storeEmbeddings(
       }
     }
 
-    await cleanupDeletedDocuments(
-      documents.map(doc => doc.id),
-      client
-    );
     await client.sql`COMMIT`;
   } catch (error) {
     await client.sql`ROLLBACK`;
@@ -527,15 +460,10 @@ async function storeEmbeddings(
     await client.end();
   }
 
-  console.log(
-    `\n📊 处理统计：新增 ${newCount} 篇，更新 ${updatedCount} 篇，跳过 ${skippedCount} 篇`
-  );
+  return { newCount, updatedCount };
 }
 
-async function cleanupDeletedDocuments(
-  currentDocIds: string[],
-  client: VercelClientBase
-) {
+async function cleanupDeletedDocuments(currentDocIds: string[]) {
   console.log("\n🧹 清理已删除的文章...");
 
   if (currentDocIds.length === 0) {
@@ -543,10 +471,26 @@ async function cleanupDeletedDocuments(
     return;
   }
 
-  // 获取所有数据库中的文档
-  const allDocs = await client.sql`SELECT id, title FROM blog_embeddings_v2`;
+  const client = createClient();
+  await client.connect();
 
-  // 找出需要删除的文档
+  try {
+    await client.sql`BEGIN`;
+    await cleanupDeletedDocumentsWithClient(currentDocIds, client);
+    await client.sql`COMMIT`;
+  } catch (error) {
+    await client.sql`ROLLBACK`;
+    throw error;
+  } finally {
+    await client.end();
+  }
+}
+
+async function cleanupDeletedDocumentsWithClient(
+  currentDocIds: string[],
+  client: VercelClientBase
+) {
+  const allDocs = await client.sql`SELECT id, title FROM blog_embeddings_v2`;
   const toDelete = allDocs.rows.filter(
     row => !currentDocIds.includes(row.id as string)
   );
@@ -559,7 +503,6 @@ async function cleanupDeletedDocuments(
   console.log(`  发现 ${toDelete.length} 篇已删除的文章：`);
   for (const doc of toDelete) {
     console.log(`    - ${doc.title}`);
-    // 逐个删除
     await client.sql`DELETE FROM blog_embeddings_v2 WHERE id = ${doc.id}`;
   }
 
@@ -619,7 +562,6 @@ async function main() {
 
   // 检查哪些文档需要更新（增量更新优化）
   const skipIndices = new Set<number>();
-  const existingEmbeddings: Map<number, number[]> = new Map();
 
   if (!forceReindex) {
     console.log("\n🔍 检查需要更新的文档...");
@@ -627,7 +569,7 @@ async function main() {
     for (let i = 0; i < documents.length; i++) {
       const doc = documents[i];
       const existing = await sql`
-        SELECT title, description, text, embedding, embedding_model FROM blog_embeddings_v2 WHERE id = ${doc.id}
+        SELECT title, description, text, embedding_model FROM blog_embeddings_v2 WHERE id = ${doc.id}
       `;
 
       // 检查标题、描述和正文是否都未修改
@@ -641,7 +583,6 @@ async function main() {
       ) {
         // 文档未修改，跳过嵌入生成
         skipIndices.add(i);
-        existingEmbeddings.set(i, JSON.parse(existing.rows[0].embedding));
       }
     }
   } else {
@@ -655,44 +596,72 @@ async function main() {
     console.log(`  跳过未修改：${skipIndices.size} 篇`);
   }
 
-  // 使用 Google Gemini 免费嵌入模型
-  console.log("\n✨ 使用 Google Gemini 嵌入模型（质量高，速度快）...");
-  const embedder = new GeminiEmbedding(GEMINI_API_KEY);
-
-  console.log("🔄 正在生成向量嵌入（完全免费，仅处理新的/修改的文档）...");
-  // 将标题、描述和正文组合在一起，提高搜索准确度
-  const texts = documents.map(doc => {
-    const parts: string[] = [];
-    if (doc.description) {
-      parts.push(doc.description);
-    }
-    parts.push(doc.text);
-    return parts.join("\n\n");
-  });
-  const embeddings = await embedder.getEmbeddings(
-    texts,
-    documents.map(doc => doc.title),
-    skipIndices
+  const documentsToProcess = documents.filter(
+    (_document, index) => !skipIndices.has(index)
   );
+  const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+  let newCount = 0;
+  let updatedCount = 0;
 
-  // 用已存在的嵌入填充跳过的文档
-  for (const [index, embedding] of existingEmbeddings) {
-    embeddings[index] = embedding;
+  if (documentsToProcess.length > 0) {
+    console.log(
+      `\n✨ 使用 Gemini ${EMBEDDING_MODEL} 批量生成向量（每批最多 ${EMBEDDING_BATCH_SIZE} 篇）...`
+    );
   }
 
-  // 保存到 Neon 数据库
-  await storeEmbeddings(documents, embeddings, skipIndices);
+  for (
+    let start = 0;
+    start < documentsToProcess.length;
+    start += EMBEDDING_BATCH_SIZE
+  ) {
+    const batchDocuments = documentsToProcess.slice(
+      start,
+      start + EMBEDDING_BATCH_SIZE
+    );
+    const batchNumber = Math.floor(start / EMBEDDING_BATCH_SIZE) + 1;
+    const totalBatches = Math.ceil(
+      documentsToProcess.length / EMBEDDING_BATCH_SIZE
+    );
+    console.log(
+      `\n🔄 处理批次 ${batchNumber}/${totalBatches}（${batchDocuments.length} 篇）...`
+    );
+
+    try {
+      const batchEmbeddings = await embedDocuments(
+        genAI,
+        batchDocuments.map(doc => ({
+          title: doc.title,
+          text: [doc.description, doc.text].filter(Boolean).join("\n\n"),
+        }))
+      );
+      const batchStats = await storeEmbeddings(
+        batchDocuments,
+        batchEmbeddings
+      );
+      newCount += batchStats.newCount;
+      updatedCount += batchStats.updatedCount;
+      console.log(`  ✅ 批次 ${batchNumber}/${totalBatches} 已持久化`);
+    } catch (error) {
+      console.error(
+        `  ❌ 批次 ${batchNumber}/${totalBatches} 失败；此前成功批次已保存，下次运行会自动跳过`
+      );
+      throw error;
+    }
+  }
+
+  await cleanupDeletedDocuments(documents.map(doc => doc.id));
 
   console.log("\n🎉 成功！你的博客内容已全部转化为 AI 可搜索的知识库！");
   console.log("📊 统计信息：");
   console.log(`  - 文档数量: ${documents.length}`);
-  console.log(
-    `  - 向量维度: ${embeddings[0]?.length || 0} (Gemini ${EMBEDDING_MODEL})`
-  );
+  console.log(`  - 新增: ${newCount} 篇`);
+  console.log(`  - 更新: ${updatedCount} 篇`);
+  console.log(`  - 跳过: ${skipIndices.size} 篇`);
+  console.log(`  - 向量维度: ${EMBEDDING_DIMENSIONS} (Gemini ${EMBEDDING_MODEL})`);
   console.log(`  - 存储位置: Neon PostgreSQL`);
   console.log("\n💡 提示：");
   console.log("  - 后续可以使用 Gemini/Groq 做 AI 对话");
-  console.log("  - Gemini 免费额度：每分钟 1500 次嵌入请求");
+  console.log("  - Gemini 实际额度请以 Google AI Studio 项目页面为准");
   console.log("  - 增量更新：bun run index-blog");
   console.log("  - 强制重建：bun run index-blog --force");
 }
