@@ -99,6 +99,19 @@ test("indexes changed documents in bounded, resumable batches", () => {
   expect(cleanup).toBeGreaterThan(batchPersistence);
 });
 
+test("paces embedding batches so a full index finishes in one workflow run", () => {
+  const indexScript = readFileSync(join(root, "scripts/index-blog.ts"), "utf8");
+  const workflow = readFileSync(
+    join(root, ".github/workflows/index-blog.yml"),
+    "utf8"
+  );
+
+  expect(workflow).toContain('GEMINI_BATCH_DELAY_MS: "35000"');
+  expect(indexScript).toContain("GEMINI_BATCH_DELAY_MS");
+  expect(indexScript).toContain("await delay(EMBEDDING_BATCH_DELAY_MS)");
+  expect(indexScript).toContain("start + batchDocuments.length");
+});
+
 test("uses the configured pooled database connection for batch transactions", () => {
   const indexScript = readFileSync(join(root, "scripts/index-blog.ts"), "utf8");
 
@@ -192,6 +205,7 @@ test("embeds multiple documents in one request and preserves their order", async
 test("retries transient batch embedding failures", async () => {
   const values = Array.from({ length: EMBEDDING_DIMENSIONS }, () => 1);
   const quotaError = Object.assign(new Error("quota"), { status: 429 });
+  const delays: number[] = [];
   let attempts = 0;
 
   const client = {
@@ -207,10 +221,16 @@ test("retries transient batch embedding failures", async () => {
   await embedDocuments(
     client as never,
     [{ text: "正文", title: "标题" }],
-    { sleep: async () => {}, random: () => 0 }
+    {
+      sleep: async delayMs => {
+        delays.push(delayMs);
+      },
+      random: () => 0,
+    }
   );
 
   expect(attempts).toBe(2);
+  expect(delays).toEqual([65_000]);
 });
 
 test("rejects incomplete batch embedding responses", async () => {

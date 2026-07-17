@@ -4,6 +4,11 @@ export interface RetryOptions {
   maxDelayMs?: number;
   random?: () => number;
   sleep?: (delayMs: number) => Promise<void>;
+  getDelayMs?: (
+    error: unknown,
+    retryNumber: number,
+    calculatedDelayMs: number
+  ) => number;
   onRetry?: (error: unknown, retryNumber: number, delayMs: number) => void;
 }
 
@@ -29,6 +34,7 @@ export async function retryTransient<T>(
     maxDelayMs = 60_000,
     random = Math.random,
     sleep = defaultSleep,
+    getDelayMs,
     onRetry,
   } = options;
 
@@ -41,11 +47,21 @@ export async function retryTransient<T>(
       }
 
       const exponentialDelay = Math.min(maxDelayMs, baseDelayMs * 2 ** attempt);
-      const delayMs = Math.min(
+      const calculatedDelayMs = Math.min(
         maxDelayMs,
         Math.round(exponentialDelay * (1 + random() * 0.25))
       );
       const retryNumber = attempt + 1;
+      const delayMs = Math.min(
+        maxDelayMs,
+        Math.max(
+          0,
+          Math.round(
+            getDelayMs?.(error, retryNumber, calculatedDelayMs) ??
+              calculatedDelayMs
+          )
+        )
+      );
 
       onRetry?.(error, retryNumber, delayMs);
       await sleep(delayMs);

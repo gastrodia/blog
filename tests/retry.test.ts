@@ -101,3 +101,30 @@ test("caps jittered backoff at the configured maximum", async () => {
 
   expect(delays).toEqual([60_000]);
 });
+
+test("allows transient errors to override the calculated delay", async () => {
+  const error = Object.assign(new Error("quota"), { status: 429 });
+  const delays: number[] = [];
+  let attempts = 0;
+
+  await retryTransient(
+    async () => {
+      attempts++;
+      if (attempts === 1) throw error;
+      return "ok";
+    },
+    {
+      maxDelayMs: 65_000,
+      random: () => 0,
+      getDelayMs: (receivedError, _retryNumber, calculatedDelayMs) =>
+        (receivedError as { status?: number }).status === 429
+          ? 65_000
+          : calculatedDelayMs,
+      sleep: async delayMs => {
+        delays.push(delayMs);
+      },
+    }
+  );
+
+  expect(delays).toEqual([65_000]);
+});

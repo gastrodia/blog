@@ -40,6 +40,16 @@ export async function embedDocuments(
 ): Promise<number[][]> {
   if (documents.length === 0) return [];
 
+  const getDelayMs =
+    retryOptions.getDelayMs ??
+    ((error: unknown, _retryNumber: number, calculatedDelayMs: number) => {
+      const status =
+        error && typeof error === "object" && "status" in error
+          ? Number(error.status)
+          : undefined;
+      return status === 429 ? 65_000 : calculatedDelayMs;
+    });
+
   const response = await retryTransient(
     () =>
       client.models.embedContent({
@@ -52,7 +62,9 @@ export async function embedDocuments(
         config: { outputDimensionality: EMBEDDING_DIMENSIONS },
       }),
     {
+      maxDelayMs: retryOptions.maxDelayMs ?? 65_000,
       ...retryOptions,
+      getDelayMs,
       onRetry:
         retryOptions.onRetry ??
         ((error, retryNumber, delayMs) => {

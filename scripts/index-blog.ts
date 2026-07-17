@@ -14,6 +14,16 @@ import {
 
 // Google Gemini Embedding + Neon PostgreSQL
 const EMBEDDING_BATCH_SIZE = 10;
+const configuredBatchDelayMs = Number(
+  process.env.GEMINI_BATCH_DELAY_MS ?? 35_000
+);
+const EMBEDDING_BATCH_DELAY_MS =
+  Number.isFinite(configuredBatchDelayMs) && configuredBatchDelayMs >= 0
+    ? configuredBatchDelayMs
+    : 35_000;
+
+const delay = (delayMs: number) =>
+  new Promise<void>(resolve => setTimeout(resolve, delayMs));
 
 interface Document {
   id: string;
@@ -639,6 +649,16 @@ async function main() {
       newCount += batchStats.newCount;
       updatedCount += batchStats.updatedCount;
       console.log(`  ✅ 批次 ${batchNumber}/${totalBatches} 已持久化`);
+
+      if (
+        start + batchDocuments.length < documentsToProcess.length &&
+        EMBEDDING_BATCH_DELAY_MS > 0
+      ) {
+        console.log(
+          `  ⏳ 等待 ${EMBEDDING_BATCH_DELAY_MS / 1000} 秒后处理下一批，避免触发 Gemini 配额...`
+        );
+        await delay(EMBEDDING_BATCH_DELAY_MS);
+      }
     } catch (error) {
       console.error(
         `  ❌ 批次 ${batchNumber}/${totalBatches} 失败；此前成功批次已保存，下次运行会自动跳过`

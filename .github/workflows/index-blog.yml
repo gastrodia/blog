@@ -37,6 +37,7 @@ jobs:
       - name: 运行博客索引脚本
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_BATCH_DELAY_MS: "35000"
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
         run: bun run index-blog
 
