@@ -99,6 +99,15 @@ test("indexes changed documents in bounded, resumable batches", () => {
   expect(cleanup).toBeGreaterThan(batchPersistence);
 });
 
+test("uses the configured pooled database connection for batch transactions", () => {
+  const indexScript = readFileSync(join(root, "scripts/index-blog.ts"), "utf8");
+
+  expect(indexScript).not.toContain("createClient()");
+  expect(indexScript).toContain("await sql.connect()");
+  expect(indexScript).toContain("client.release()");
+  expect(indexScript).not.toContain("client.end()");
+});
+
 test("formats asymmetric question-answering inputs for Gemini Embedding 2", () => {
   expect(prepareEmbeddingQuery("作者是谁？")).toBe(
     "task: question answering | query: 作者是谁？"

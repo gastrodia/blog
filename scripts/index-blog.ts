@@ -2,7 +2,7 @@
 
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { createClient, sql, type VercelClientBase } from "@vercel/postgres";
+import { sql, type VercelClientBase } from "@vercel/postgres";
 import { GoogleGenAI } from "@google/genai";
 import matter from "gray-matter";
 import {
@@ -405,8 +405,7 @@ async function storeEmbeddings(
   let newCount = 0;
   let updatedCount = 0;
 
-  const client = createClient();
-  await client.connect();
+  const client = await sql.connect();
 
   try {
     await client.sql`BEGIN`;
@@ -457,7 +456,7 @@ async function storeEmbeddings(
     await client.sql`ROLLBACK`;
     throw error;
   } finally {
-    await client.end();
+    client.release();
   }
 
   return { newCount, updatedCount };
@@ -471,8 +470,7 @@ async function cleanupDeletedDocuments(currentDocIds: string[]) {
     return;
   }
 
-  const client = createClient();
-  await client.connect();
+  const client = await sql.connect();
 
   try {
     await client.sql`BEGIN`;
@@ -482,7 +480,7 @@ async function cleanupDeletedDocuments(currentDocIds: string[]) {
     await client.sql`ROLLBACK`;
     throw error;
   } finally {
-    await client.end();
+    client.release();
   }
 }
 
