@@ -17,11 +17,16 @@ export const GISCUS = {
 
 export const PROFILE = {
   aboutMe: `
-      Hi, I'm <mark>Jia Jiwei</mark>, born in 1997. Currently working in
-      Shenzhen, Guangdong. As a Web Developer, This space documents my
-      professional expertise and career journey.
+      <p>I'm Jia Jiwei, also known online as gastrodia. Born in 1997 and
+      working in Shenzhen, Guangdong, I started in frontend engineering.
+      Today, I build across the full stack with AI as part of my development process.</p>
+      <p>My focus has expanded from individual interfaces to complete web products,
+      with frontend experience still at the heart of my work. I work mainly with
+      TypeScript, Vue, Astro, Node.js, and Deno.</p>
+      <p>This blog connects my earlier engineering notes with what comes next:
+      building products, working with AI, and documenting the decisions along the way.</p>
 `,
-  synopsis: "Full Stack Web Developer",
+  synopsis: "AI Full-Stack Developer",
   resumeName: `前端开发工程师_贾继伟`,
   avatar: "/assets/images/about/self.jpg",
   resume: `/resume.pdf`,
@@ -89,11 +94,11 @@ export const SHARE_LINKS: Social[] = [
 
 export const SKILLS = [
   {
-    name: "Javascript",
+    name: "JavaScript",
     logo: `Javascript`,
   },
   {
-    name: "Typescript",
+    name: "TypeScript",
     logo: `Typescript`,
   },
   {
@@ -113,11 +118,11 @@ export const SKILLS = [
     logo: `Astro`,
   },
   {
-    name: "ThreeJs",
+    name: "Three.js",
     logo: `ThreeJs`,
   },
   {
-    name: "NodeJs",
+    name: "Node.js",
     logo: `NodeJs`,
   },
   {
@@ -129,7 +134,7 @@ export const SKILLS = [
     logo: `Deno`,
   },
   {
-    name: "Tailwindcss",
+    name: "Tailwind CSS",
     logo: `Tailwindcss`,
   },
   {
@@ -162,42 +167,26 @@ export const EDUCATION = [
 
 export const PROJECTS = [
   {
+    title: "Ledger",
+    href: "https://ledger.jiajiwei.top/",
+    tags: "Next.js, React, TypeScript, PostgreSQL",
+    desc: "A personal and family ledger for keeping spending, gifts, and loans in view. It connects member-based reports and repayment tracking with optional AI summaries of recorded finances.",
+    github: "https://github.com/gastrodia/ledger",
+    wip: false,
+  },
+  {
     title: "Blog",
     href: "/posts",
     tags: "Astro",
-    desc: "This website",
+    desc: "A home for my technical writing and project notes. I built the Astro site with searchable posts, a resume viewer, and an AI assistant to help readers explore the content.",
     github: "https://github.com/gastrodia/blog",
     wip: true,
   },
   {
-    title: "Rust Note",
-    href: "https://rs.jiajiwei.top",
-    tags: "Rust",
-    desc: "Notes on learning the rust language",
-    github: "https://github.com/gastrodia/note-rust",
-    wip: true,
-  },
-  {
-    title: "Three.js Note",
-    href: "https://gastrodia.github.io/learn-three",
-    tags: "Three.js",
-    desc: "Notes on learning the three.js framework",
-    github: "https://github.com/gastrodia/learn-three",
-    wip: true,
-  },
-  {
-    title: "Share Vue3.0",
-    href: "https://gastrodia.github.io/demo",
-    tags: "Vue",
-    desc: "Learn about Vue3.0 quickly",
-    github: "https://github.com/gastrodia/demo",
-    wip: false,
-  },
-  {
-    title: "Deno p2p chat",
-    href: "https://deno-p2p-chat.deno.dev/",
-    tags: "Deno,DenoKV,Fresh",
-    desc: "An instant messaging system based on Deno, Fresh, DenoKV, and daisyui.",
+    title: "Deno P2P Chat",
+    href: "https://deno-p2p-chat.gastrodia.deno.net/",
+    tags: "Deno, Fresh, Deno KV, daisyUI",
+    desc: "An instant messaging app for chatting on the web. I bring together a Fresh interface and Deno KV storage to explore full-stack development with Deno.",
     github: "https://github.com/gastrodia/deno-p2p-chat",
     wip: false,
   },

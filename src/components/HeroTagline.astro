@@ -1,0 +1,245 @@
+---
+const phrases = [
+  { word: "Build", tail: "practical web products.", effect: "shuffle" },
+  { word: "Learn", tail: "by making things.", effect: "spread" },
+  { word: "Share", tail: "what I discover.", effect: "flip" },
+];
+---
+
+<hero-tagline data-phrases={JSON.stringify(phrases)}>
+  <p class="sr-only">
+    I build practical web products, learn by making things, and share what I
+    discover.
+  </p>
+  <div class="tagline" aria-hidden="true">
+    <span class="word" data-effect="shuffle">
+      <span class="letters">Build</span>
+    </span>
+    <span class="tail">
+      <span class="tail-space">practical web products.</span>
+      <span class="typed">practical web products.</span>
+    </span>
+  </div>
+</hero-tagline>
+
+<script>
+  type Phrase = { word: string; tail: string; effect: string };
+
+  class HeroTagline extends HTMLElement {
+    private cleanup?: () => void;
+
+    connectedCallback() {
+      // Astro can reconnect elements during page navigation.
+      this.cleanup?.();
+      const phrases: Phrase[] = JSON.parse(this.dataset.phrases || "[]");
+      const word = this.querySelector<HTMLElement>(".word")!;
+      const letters = this.querySelector<HTMLElement>(".letters")!;
+      const typed = this.querySelector<HTMLElement>(".typed")!;
+      const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+      let index = 0;
+      let inView = false;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      let animations: Animation[] = [];
+      let typingFrame = 0;
+      let disposed = false;
+      const canPlay = () =>
+        !disposed && !reducedMotion.matches && inView && !document.hidden;
+
+      const stop = () => {
+        clearTimeout(timer);
+        cancelAnimationFrame(typingFrame);
+        animations.forEach(animation => animation.cancel());
+        animations = [];
+        typed.textContent = phrases[index].tail;
+        this.removeAttribute("data-typing");
+      };
+
+      const render = (animate: boolean) => {
+        stop();
+        const phrase = phrases[index];
+        word.dataset.effect = phrase.effect;
+        letters.replaceChildren(
+          ...Array.from(phrase.word, char => {
+            const span = document.createElement("span");
+            span.textContent = char;
+            return span;
+          })
+        );
+        typed.textContent = phrase.tail;
+        if (!animate) return;
+
+        const chars = Array.from(letters.children) as HTMLElement[];
+        chars.forEach((char, i) => {
+          const offset = (chars.length - 1 - 2 * i) * 100;
+          const from =
+            phrase.effect === "shuffle"
+              ? {
+                  transform: `translateX(${offset}%) scale(.92)`,
+                  opacity: 0.25,
+                }
+              : phrase.effect === "flip"
+                ? {
+                    transform:
+                      "perspective(500px) rotateX(-90deg) translateY(6px)",
+                    opacity: 0,
+                  }
+                : {
+                    transform: `translateX(${(i - (chars.length - 1) / 2) * 7}px) translateY(8px)`,
+                    opacity: 0,
+                  };
+          animations.push(
+            char.animate([from, { transform: "none", opacity: 1 }], {
+              duration: 720,
+              delay: i * 45,
+              easing: "cubic-bezier(.22,1,.36,1)",
+              fill: "backwards",
+            })
+          );
+        });
+        typed.textContent = "";
+        this.setAttribute("data-typing", "");
+        const start = performance.now() + 180;
+        const type = (now: number) => {
+          const count = Math.max(0, Math.floor((now - start) / 48));
+          typed.textContent = phrase.tail.slice(0, count);
+          if (count < phrase.tail.length)
+            typingFrame = requestAnimationFrame(type);
+          else this.removeAttribute("data-typing");
+        };
+        typingFrame = requestAnimationFrame(type);
+      };
+
+      const schedule = () => {
+        clearTimeout(timer);
+        if (!canPlay()) return;
+        timer = setTimeout(() => {
+          if (!canPlay()) return;
+          index = (index + 1) % phrases.length;
+          render(true);
+          schedule();
+        }, 4200);
+      };
+
+      const sync = () => {
+        stop();
+        if (reducedMotion.matches) {
+          index = 0;
+          render(false);
+        } else if (canPlay()) {
+          render(true);
+          schedule();
+        }
+      };
+      const observer = new IntersectionObserver(([entry]) => {
+        inView = entry.isIntersecting;
+        sync();
+      });
+      observer.observe(this);
+      reducedMotion.addEventListener("change", sync);
+      document.addEventListener("visibilitychange", sync);
+      this.cleanup = () => {
+        disposed = true;
+        stop();
+        observer.disconnect();
+        reducedMotion.removeEventListener("change", sync);
+        document.removeEventListener("visibilitychange", sync);
+      };
+    }
+
+    disconnectedCallback() {
+      this.cleanup?.();
+    }
+  }
+
+  if (!customElements.get("hero-tagline")) {
+    customElements.define("hero-tagline", HeroTagline);
+  }
+</script>
+
+<style>
+  hero-tagline {
+    display: block;
+    padding-block: 0.5rem 0.25rem;
+  }
+
+  .tagline {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    flex-wrap: wrap;
+    column-gap: 0.65em;
+    row-gap: 0.2em;
+    font-size: clamp(1rem, 2vw, 1.125rem);
+    line-height: 1.7;
+  }
+
+  .word {
+    position: relative;
+    display: inline-flex;
+    justify-content: center;
+    min-width: 7ch;
+    font-weight: 700;
+  }
+
+  .word::before,
+  .word::after {
+    position: absolute;
+  }
+
+  .word[data-effect="shuffle"]::before {
+    content: "[";
+    left: 0;
+  }
+  .word[data-effect="shuffle"]::after {
+    content: "]";
+    right: 0;
+  }
+  .word[data-effect="spread"]::after {
+    content: "";
+    inset: 15% 0 8%;
+    background: currentColor;
+    opacity: 0.1;
+    transform: skewX(-8deg);
+  }
+  .word[data-effect="flip"]::after {
+    content: "";
+    bottom: 0;
+    left: 0.6ch;
+    right: 0.6ch;
+    border-bottom: 2px solid currentColor;
+  }
+
+  .letters {
+    display: inline-flex;
+  }
+  .letters :global(span) {
+    display: inline-block;
+  }
+  .tail {
+    display: grid;
+    text-align: left;
+  }
+  .tail-space,
+  .typed {
+    grid-area: 1 / 1;
+  }
+  .tail-space {
+    visibility: hidden;
+  }
+  .typed::after {
+    content: "";
+    display: inline-block;
+    height: 0.9em;
+    border-left: 1px solid currentColor;
+    margin-left: 2px;
+    opacity: 0;
+  }
+  [data-typing] .typed::after {
+    opacity: 1;
+  }
+  @media (min-width: 640px) {
+    .tagline {
+      justify-content: flex-start;
+    }
+  }
+</style>

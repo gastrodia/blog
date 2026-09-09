@@ -1,8 +1,7 @@
 ---
-import LinkButton from "@/components/LinkButton.astro";
-import Icon from "@/components/Icon.astro";
+import Icon from "./Icon.astro";
 
-export interface ProjectProps {
+export interface Props {
   title: string;
   href?: string;
   tags: string;
@@ -12,31 +11,58 @@ export interface ProjectProps {
 }
 
 const { title, href, github, desc, tags, wip } = Astro.props;
+const status = wip ? "In progress" : "Personal project";
 ---
 
-<li class="relative flex flex-col border p-4">
-  <div class="flex items-center justify-between">
-    <LinkButton
-      class="underline decoration-dashed underline-offset-4"
-      href={href}
-      target="_blank">{title}</LinkButton
-    >
+<li
+  class="grid min-w-0 gap-y-2 border-b border-foreground/20 py-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-x-4 sm:py-6"
+>
+  <div
+    class="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1 sm:self-center"
+  >
+    <h3 class="text-lg font-semibold">{title}</h3>
+    <p class="text-xs">{status}</p>
   </div>
-  <p class="flex-1 py-2 text-sm">{desc}</p>
-  <div class="flex justify-between text-xs">
-    <p class="flex items-center gap-1">
-      <label><Icon name="Tag" class="size-4" /></label>
-      <span>{tags}</span>
-    </p>
-    <LinkButton href={github} class="link-icon link underline" target="_blank">
-      Repo
-    </LinkButton>
+  <p class="text-sm leading-relaxed sm:col-span-2">{desc}</p>
+  <p class="mt-1 text-xs leading-relaxed sm:col-span-2">
+    <span class="sr-only">Built with: </span>
+    {
+      tags
+        .split(",")
+        .map(tag => tag.trim())
+        .join(" · ")
+    }
+  </p>
+  <div
+    class="mt-1 flex items-center gap-2 self-start text-sm sm:col-start-2 sm:row-start-1 sm:mt-0 sm:justify-end"
+  >
+    {
+      href && (
+        <a
+          href={href}
+          aria-label={`Preview ${title}`}
+          class="inline-flex min-h-10 items-center gap-2 rounded-sm border border-foreground/30 px-3 font-medium transition-colors hover:border-foreground hover:bg-foreground hover:text-background focus-visible:border-foreground focus-visible:bg-foreground focus-visible:text-background motion-reduce:transition-none"
+        >
+          <span>Preview</span>
+          <span aria-hidden="true">
+            <Icon name="ArrowRight" class="size-4 -rotate-45" />
+          </span>
+        </a>
+      )
+    }
+    {
+      github && (
+        <a
+          href={github}
+          aria-label={`View ${title} source on GitHub`}
+          title="View source"
+          class="inline-flex size-10 items-center justify-center rounded-sm border border-foreground/30 transition-colors hover:border-foreground hover:bg-foreground hover:text-background focus-visible:border-foreground focus-visible:bg-foreground focus-visible:text-background motion-reduce:transition-none"
+        >
+          <span aria-hidden="true">
+            <Icon name="GitHub" class="size-5" />
+          </span>
+        </a>
+      )
+    }
   </div>
-  {
-    wip ? (
-      <span class="absolute top-0 right-0 rounded-bl-md bg-accent px-2 text-xs text-background">
-        wip
-      </span>
-    ) : null
-  }
 </li>

@@ -2,6 +2,18 @@
 import { SKILLS, EDUCATION, PROFILE } from "@/constants";
 import GetResume from "@/components/GetResume.astro";
 import Icon from "./Icon.astro";
+
+const skillGroups = [
+  {
+    title: "Frontend",
+    logos: ["Vue", "Angular", "React", "Astro", "ThreeJs", "Tailwindcss"],
+  },
+  { title: "Backend & Runtime", logos: ["NodeJs", "Bun", "Deno"] },
+  {
+    title: "Tools & Languages",
+    logos: ["Javascript", "Typescript", "Rust", "Python", "Linux", "Git"],
+  },
+];
 ---
 
 <section id="about-me" class="scroll-mt-16">
@@ -10,31 +22,45 @@ import Icon from "./Icon.astro";
   </div>
   <div class="grid grid-cols-1 gap-x-10 gap-y-6 lg:grid-cols-[1fr_6fr]">
     <div class="flex flex-wrap justify-between gap-2">
-      <label class="text-3xl font-bold whitespace-nowrap lg:text-right">
+      <h2 class="text-3xl font-bold whitespace-nowrap lg:text-right">
         ABOUT ME
-      </label>
+      </h2>
       <div class="block lg:hidden">
         <GetResume />
       </div>
     </div>
     <div class="space-y-2">
       <Fragment set:html={PROFILE.aboutMe} />
+      <a
+        href="/posts/p31"
+        class="inline-block text-sm underline decoration-1 underline-offset-4 hover:text-accent"
+      >
+        How my work is changing
+      </a>
     </div>
-    <label class="text-xl font-bold lg:text-right"> SKILLS </label>
-    <ul class="grid grid-cols-2 gap-6 sm:grid-cols-3">
+    <h3 class="text-xl font-bold lg:text-right">SKILLS</h3>
+    <div class="space-y-4">
       {
-        SKILLS.map(skill => {
-          const Logo = skill.logo;
-          return (
-            <li class="flex items-center gap-2">
-              <Icon class="size-6" name={Logo} />
-              <span>{skill.name}</span>
-            </li>
-          );
-        })
+        skillGroups.map(group => (
+          <div>
+            <h4 class="mb-2 text-sm font-semibold">{group.title}</h4>
+            <ul class="flex flex-wrap gap-x-5 gap-y-2">
+              {SKILLS.filter(skill => group.logos.includes(skill.logo)).map(
+                skill => (
+                  <li class="flex items-center gap-2 text-sm">
+                    <span aria-hidden="true">
+                      <Icon class="size-5" name={skill.logo} />
+                    </span>
+                    <span>{skill.name}</span>
+                  </li>
+                )
+              )}
+            </ul>
+          </div>
+        ))
       }
-    </ul>
-    <label class="text-xl font-bold lg:text-right"> EDUCATION </label>
+    </div>
+    <h3 class="text-xl font-bold lg:text-right">EDUCATION</h3>
     <ul>
       {
         EDUCATION.map(item => (

@@ -79,7 +79,14 @@ const isActive = (path: string) => {
           ]}
         >
           <li class="col-span-2">
-            <a href="/posts" class:list={{ "active-nav": isActive("/posts") }}>
+            <a
+              href="/posts"
+              aria-current={isActive("/posts") ? "page" : undefined}
+              class:list={[
+                "decoration-1 underline-offset-4 hover:underline focus-visible:underline",
+                { underline: isActive("/posts") },
+              ]}
+            >
               Posts
             </a>
           </li>

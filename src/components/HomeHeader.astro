@@ -1,22 +1,21 @@
 ---
 import ThemeToggle from "@/components/ThemeToggle.astro";
-import LinkButton from "@/components/LinkButton.astro";
 import { SITE } from "@/config";
 ---
 
 <header
   class="fixed top-0 z-10 flex min-h-14 w-full items-center bg-muted px-4"
 >
-  <h1 class="flex-1 text-2xl">
+  <p class="flex-1 text-2xl">
     <a href="/" transition:name="site-title" transition:animate="slide"
       >{SITE.title}</a
     >
-  </h1>
-  <div class="grid grid-cols-2 items-center gap-4">
-    <LinkButton
-      class="posts hover:text-skin-accent animate-shake text-center font-medium decoration-dashed underline-offset-4 hover:underline"
-      href="/posts">Blogs</LinkButton
+  </p>
+  <nav aria-label="Main navigation" class="grid grid-cols-2 items-center gap-4">
+    <a
+      class="text-center font-medium decoration-1 underline-offset-4 hover:underline focus-visible:underline"
+      href="/posts">Blogs</a
     >
     <ThemeToggle />
-  </div>
+  </nav>
 </header>

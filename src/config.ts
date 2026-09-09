@@ -26,7 +26,7 @@ export const SITE: SiteConfig = {
   website: "https://jiajiwei.top/", // replace this with your deployed domain
   author: "gastrodia",
   profile: "https://jiajiwei.top/",
-  desc: "Record my learning, life, work, and thinking", // 记录我的学习、生活、工作、思考
+  desc: "Jia Jiwei's notes on building web products, AI-assisted development, and the engineering decisions behind them.",
   title: "Code_You",
   ogImage: "cover.png",
   lightAndDarkMode: true,

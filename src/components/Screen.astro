@@ -1,41 +1,58 @@
 ---
+import HeroTagline from "./HeroTagline.astro";
 import Icon from "./Icon.astro";
 import LinkButton from "@/components/LinkButton.astro";
-import { SITE } from "@/config";
 import { PROFILE } from "@/constants";
 ---
 
 <div
-  class="flex w-full flex-shrink-0 flex-col items-center justify-between bg-muted sm:h-screen"
+  class="flex w-full flex-shrink-0 flex-col items-center justify-between bg-muted px-4 sm:min-h-svh"
 >
   <div class="min-h-14"></div>
   <div
-    class="mt-12 mb-4 flex flex-col items-center gap-x-10 gap-y-5 sm:mt-14 sm:mb-14 sm:flex-row"
+    class="mt-12 mb-4 flex w-full max-w-3xl flex-col items-center gap-x-8 gap-y-5 sm:mt-14 sm:mb-14 sm:flex-row"
   >
     <div
-      class="flex h-24 w-24 items-center overflow-hidden rounded-full sm:h-52 sm:w-52"
+      class="flex h-24 w-24 shrink-0 items-center overflow-hidden rounded-full sm:h-52 sm:w-52"
     >
-      <img class="w-full scale-150" src={PROFILE.avatar} alt="" />
+      <img
+        class="w-full scale-150"
+        src={PROFILE.avatar}
+        alt="Portrait of Jia Jiwei"
+        width="208"
+        height="208"
+      />
     </div>
-    <div class="space-y-2 text-center sm:text-left">
-      <h2
-        class="animate__animated animate__fadeInUp animate__delay-1s text-2xl sm:text-4xl"
-      >
-        <span>Hi, I'm {SITE.author} </span>
-        <span class="animate-wave inline-block">👋</span>
-      </h2>
-      <h3
-        class="animate__animated animate__fadeInUp animate__delay-2s text-lg sm:text-lg"
-      >
+    <div class="min-w-0 space-y-2 text-center sm:text-left">
+      <h1 class="text-2xl sm:text-4xl">
+        <span>Hi, I'm Jia Jiwei. </span>
+        <span
+          aria-hidden="true"
+          class="animate-wave inline-block motion-reduce:animate-none">👋</span
+        >
+      </h1>
+      <p class="text-lg font-semibold text-foreground">
         {PROFILE.synopsis}
-      </h3>
+      </p>
+      <HeroTagline />
+      <p class="max-w-lg text-sm leading-relaxed sm:text-base">
+        From frontend craft to full-stack products, built with AI.
+      </p>
+      <p class="max-w-lg text-sm leading-relaxed sm:text-base">
+        I turn ideas into web products and share the decisions, experiments, and
+        engineering behind them.
+      </p>
       <LinkButton
-        class="hover:text-skin-accent animate__animated animate__fadeInUp animate__delay-3s text-2xl underline decoration-dashed underline-offset-4 sm:text-4xl"
-        href="/posts">Blogs</LinkButton
+        class="hover:text-skin-accent inline-block pt-3 text-xl underline decoration-dashed underline-offset-4 sm:text-2xl"
+        href="/posts">Read the blog</LinkButton
       >
     </div>
   </div>
-  <a href="#about-me" class="animate-bounce pb-2 sm:block">
+  <a
+    href="#about-me"
+    aria-label="Learn more about Jia Jiwei"
+    class="animate-bounce pb-2 motion-reduce:animate-none sm:block"
+  >
     <Icon name="ArrowDown" class="size-6 stroke-1" />
   </a>
 </div>
