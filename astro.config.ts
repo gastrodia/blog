@@ -77,12 +77,12 @@ export default defineConfig({
         context: "server",
         optional: false,
       }),
-      WECHAT_APP_ID: envField.string({
+      WECHAT_SIGNER_URL: envField.string({
         access: "secret",
         context: "server",
         optional: true,
       }),
-      WECHAT_APP_SECRET: envField.string({
+      WECHAT_SIGNER_TOKEN: envField.string({
         access: "secret",
         context: "server",
         optional: true,

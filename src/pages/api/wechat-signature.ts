@@ -1,40 +1,15 @@
 import type { APIRoute } from "astro";
-import { WECHAT_APP_ID, WECHAT_APP_SECRET } from "astro:env/server";
-import { createHash, randomBytes } from "node:crypto";
+import { WECHAT_SIGNER_TOKEN, WECHAT_SIGNER_URL } from "astro:env/server";
 import { SITE } from "@/config";
 
 export const prerender = false;
 
-const WECHAT_API_BASE = "https://api.weixin.qq.com/cgi-bin";
-const CACHE_SAFETY_WINDOW_MS = 5 * 60 * 1000;
-
-interface ExpiringValue {
-  value: string;
-  expiresAt: number;
+interface WechatSignature {
+  appId: string;
+  nonceStr: string;
+  signature: string;
+  timestamp: number;
 }
-
-interface WechatResponse {
-  access_token?: string;
-  ticket?: string;
-  expires_in?: number;
-  errcode?: number;
-  errmsg?: string;
-}
-
-class WechatApiError extends Error {
-  constructor(
-    readonly code: number,
-    message: string
-  ) {
-    super(message);
-    this.name = "WechatApiError";
-  }
-}
-
-let accessTokenCache: ExpiringValue | undefined;
-let ticketCache: ExpiringValue | undefined;
-let accessTokenRequest: Promise<ExpiringValue> | undefined;
-let ticketRequest: Promise<ExpiringValue> | undefined;
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -44,135 +19,6 @@ function json(body: unknown, status = 200) {
       "Content-Type": "application/json; charset=utf-8",
     },
   });
-}
-
-function isFresh(entry: ExpiringValue | undefined) {
-  return Boolean(entry && entry.expiresAt > Date.now());
-}
-
-async function fetchWechat(
-  url: URL,
-  init?: RequestInit
-): Promise<WechatResponse> {
-  const headers = new Headers(init?.headers);
-  headers.set("Accept", "application/json");
-
-  const response = await fetch(url, {
-    ...init,
-    headers,
-    signal: AbortSignal.timeout(8_000),
-  });
-
-  if (!response.ok) {
-    throw new Error(`WeChat API request failed with HTTP ${response.status}`);
-  }
-
-  const data = (await response.json()) as WechatResponse;
-  if (data.errcode && data.errcode !== 0) {
-    throw new WechatApiError(
-      data.errcode,
-      `WeChat API error ${data.errcode}: ${data.errmsg ?? "unknown"}`
-    );
-  }
-
-  return data;
-}
-
-function expiresAt(expiresIn = 7200) {
-  const lifetimeMs = expiresIn * 1000;
-  const safetyWindow = Math.min(
-    CACHE_SAFETY_WINDOW_MS,
-    Math.max(5_000, lifetimeMs * 0.1)
-  );
-  return Date.now() + Math.max(1_000, lifetimeMs - safetyWindow);
-}
-
-async function getAccessToken(forceRefresh = false): Promise<string> {
-  if (!forceRefresh && isFresh(accessTokenCache)) {
-    return accessTokenCache!.value;
-  }
-
-  if (!forceRefresh && accessTokenRequest) {
-    return (await accessTokenRequest).value;
-  }
-
-  const request = (async () => {
-    const url = new URL(`${WECHAT_API_BASE}/stable_token`);
-    const data = await fetchWechat(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        grant_type: "client_credential",
-        appid: WECHAT_APP_ID,
-        secret: WECHAT_APP_SECRET,
-        force_refresh: forceRefresh,
-      }),
-    });
-    if (!data.access_token) {
-      throw new Error("WeChat API did not return an access token");
-    }
-
-    return {
-      value: data.access_token,
-      expiresAt: expiresAt(data.expires_in),
-    };
-  })();
-
-  accessTokenRequest = request;
-
-  try {
-    accessTokenCache = await request;
-    return accessTokenCache.value;
-  } finally {
-    if (accessTokenRequest === request) accessTokenRequest = undefined;
-  }
-}
-
-async function requestTicket(accessToken: string): Promise<ExpiringValue> {
-  const url = new URL(`${WECHAT_API_BASE}/ticket/getticket`);
-  url.searchParams.set("access_token", accessToken);
-  url.searchParams.set("type", "jsapi");
-
-  const data = await fetchWechat(url);
-  if (!data.ticket) {
-    throw new Error("WeChat API did not return a JSAPI ticket");
-  }
-
-  return {
-    value: data.ticket,
-    expiresAt: expiresAt(data.expires_in),
-  };
-}
-
-async function getJsapiTicket(): Promise<string> {
-  if (isFresh(ticketCache)) return ticketCache!.value;
-  if (ticketRequest) return (await ticketRequest).value;
-
-  const request = (async () => {
-    try {
-      return await requestTicket(await getAccessToken());
-    } catch (error) {
-      const isInvalidToken =
-        error instanceof WechatApiError &&
-        [40001, 40014, 42001].includes(error.code);
-
-      if (!isInvalidToken) throw error;
-
-      // A serverless instance may retain a revoked token. Refresh it once before
-      // surfacing the error; the API still controls the authoritative validity.
-      accessTokenCache = undefined;
-      return requestTicket(await getAccessToken(true));
-    }
-  })();
-
-  ticketRequest = request;
-
-  try {
-    ticketCache = await request;
-    return ticketCache.value;
-  } finally {
-    if (ticketRequest === request) ticketRequest = undefined;
-  }
 }
 
 function getShareUrl(request: Request) {
@@ -196,8 +42,21 @@ function getShareUrl(request: Request) {
   return shareUrl.href;
 }
 
+function isWechatSignature(value: unknown): value is WechatSignature {
+  if (!value || typeof value !== "object") return false;
+
+  const config = value as Partial<WechatSignature>;
+  return (
+    typeof config.appId === "string" &&
+    typeof config.nonceStr === "string" &&
+    typeof config.timestamp === "number" &&
+    typeof config.signature === "string" &&
+    /^[a-f0-9]{40}$/i.test(config.signature)
+  );
+}
+
 export const GET: APIRoute = async ({ request }) => {
-  if (!WECHAT_APP_ID || !WECHAT_APP_SECRET) {
+  if (!WECHAT_SIGNER_URL || !WECHAT_SIGNER_TOKEN) {
     return json({ error: "WeChat sharing is not configured" }, 503);
   }
 
@@ -210,20 +69,35 @@ export const GET: APIRoute = async ({ request }) => {
   }
 
   try {
-    const timestamp = Math.floor(Date.now() / 1000);
-    const nonceStr = randomBytes(16).toString("hex");
-    const ticket = await getJsapiTicket();
-    const source = `jsapi_ticket=${ticket}&noncestr=${nonceStr}&timestamp=${timestamp}&url=${url}`;
-    const signature = createHash("sha1").update(source).digest("hex");
+    const signerUrl = new URL(WECHAT_SIGNER_URL);
+    if (signerUrl.protocol !== "https:") {
+      throw new Error("The WeChat signer URL must use HTTPS");
+    }
+    signerUrl.searchParams.set("url", url);
 
-    return json({
-      appId: WECHAT_APP_ID,
-      nonceStr,
-      signature,
-      timestamp,
+    const response = await fetch(signerUrl, {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${WECHAT_SIGNER_TOKEN}`,
+      },
+      signal: AbortSignal.timeout(10_000),
     });
+
+    if (!response.ok) {
+      console.error(
+        `WeChat signer request failed with HTTP ${response.status}`
+      );
+      return json({ error: "Unable to configure WeChat sharing" }, 502);
+    }
+
+    const config: unknown = await response.json();
+    if (!isWechatSignature(config)) {
+      throw new Error("The WeChat signer returned an invalid response");
+    }
+
+    return json(config);
   } catch (error) {
-    console.error("Failed to create WeChat JS-SDK signature", error);
+    console.error("Failed to request a WeChat JS-SDK signature", error);
     return json({ error: "Unable to configure WeChat sharing" }, 502);
   }
 };

@@ -30,5 +30,8 @@ public/pagefind
 .vercel
 .env*.local
 
+# generated serverless deployment packages
+scf/*.zip
+
 # internal design / planning docs (kept locally only)
 docs/
