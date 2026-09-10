@@ -1,0 +1,97 @@
+<script is:inline data-astro-rerun>
+  (() => {
+    const isWechat = /MicroMessenger/i.test(navigator.userAgent);
+    if (!isWechat) return;
+
+    window.__wechatShareController?.abort();
+    const controller = new AbortController();
+    window.__wechatShareController = controller;
+
+    const getMeta = selector =>
+      document.querySelector(selector)?.getAttribute("content")?.trim() || "";
+
+    const loadWechatSdk = () => {
+      if (window.wx) return Promise.resolve(window.wx);
+      if (window.__wechatSdkPromise) return window.__wechatSdkPromise;
+
+      window.__wechatSdkPromise = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://res.wx.qq.com/open/js/jweixin-1.6.0.js";
+        script.async = true;
+        script.onload = () =>
+          window.wx
+            ? resolve(window.wx)
+            : reject(new Error("WeChat JS-SDK is unavailable"));
+        script.onerror = () =>
+          reject(new Error("WeChat JS-SDK failed to load"));
+        document.head.append(script);
+      }).catch(error => {
+        window.__wechatSdkPromise = undefined;
+        throw error;
+      });
+
+      return window.__wechatSdkPromise;
+    };
+
+    const configureShare = async () => {
+      const pageUrl = window.location.href.split("#")[0];
+      window.__wechatEntryUrl ||= pageUrl;
+      const isIOS = /iPad|iPhone|iPod/i.test(navigator.userAgent);
+      const signatureUrl = isIOS ? window.__wechatEntryUrl : pageUrl;
+
+      try {
+        const sdkPromise = loadWechatSdk();
+        const response = await fetch(
+          `/api/wechat-signature?url=${encodeURIComponent(signatureUrl)}`,
+          {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          }
+        );
+
+        if (!response.ok)
+          throw new Error(`Signature request failed: ${response.status}`);
+
+        const config = await response.json();
+        const wx = await sdkPromise;
+        if (controller.signal.aborted) return;
+
+        wx.config({
+          debug: false,
+          appId: config.appId,
+          timestamp: config.timestamp,
+          nonceStr: config.nonceStr,
+          signature: config.signature,
+          jsApiList: ["updateAppMessageShareData", "updateTimelineShareData"],
+        });
+
+        wx.ready(() => {
+          if (controller.signal.aborted) return;
+
+          const shareData = {
+            title: getMeta('meta[property="og:title"]') || document.title,
+            desc: getMeta('meta[property="og:description"]'),
+            link: getMeta('meta[property="og:url"]') || pageUrl,
+            imgUrl: getMeta('meta[property="og:image"]'),
+          };
+
+          wx.updateAppMessageShareData(shareData);
+          wx.updateTimelineShareData({
+            title: shareData.title,
+            link: shareData.link,
+            imgUrl: shareData.imgUrl,
+          });
+        });
+
+        wx.error(error => {
+          console.warn("WeChat JS-SDK configuration failed", error);
+        });
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        console.warn("Unable to initialize WeChat sharing", error);
+      }
+    };
+
+    void configureShare();
+  })();
+</script>

@@ -77,6 +77,16 @@ export default defineConfig({
         context: "server",
         optional: false,
       }),
+      WECHAT_APP_ID: envField.string({
+        access: "secret",
+        context: "server",
+        optional: true,
+      }),
+      WECHAT_APP_SECRET: envField.string({
+        access: "secret",
+        context: "server",
+        optional: true,
+      }),
     },
   },
   adapter: vercel(),

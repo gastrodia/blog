@@ -5,6 +5,7 @@ import { SITE } from "@/config";
 import "@/styles/global.css";
 import svg2symbol from "@/utils/svg2symbol";
 import ChatWidget from "@/components/ChatWidget/index.astro";
+import WechatShare from "@/components/WechatShare.astro";
 
 export interface Props {
   title?: string;
@@ -86,6 +87,8 @@ const svgSprite = Object.entries(icons).map(([key, svgContent]) => {
     <!-- Open Graph / Facebook -->
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
+    <meta property="og:type" content={pubDatetime ? "article" : "website"} />
+    <meta property="og:site_name" content={SITE.title} />
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:image" content={socialImageURL} />
 
@@ -183,6 +186,7 @@ const svgSprite = Object.entries(icons).map(([key, svgContent]) => {
     }
 
     <ClientRouter />
+    <WechatShare />
 
     <!-- <script is:inline src="/toggle-theme.js"></script> -->
   </head>
