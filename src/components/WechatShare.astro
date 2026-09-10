@@ -72,7 +72,9 @@
             title: getMeta('meta[property="og:title"]') || document.title,
             desc: getMeta('meta[property="og:description"]'),
             link: getMeta('meta[property="og:url"]') || pageUrl,
-            imgUrl: getMeta('meta[property="og:image"]'),
+            imgUrl:
+              getMeta('meta[name="wechat:image"]') ||
+              getMeta('meta[property="og:image"]'),
           };
 
           wx.updateAppMessageShareData(shareData);

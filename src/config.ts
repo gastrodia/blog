@@ -3,6 +3,7 @@ interface SiteConfig {
   author: string;
   profile: string;
   desc: string;
+  socialDescription: string;
   title: string;
   ogImage: string;
   lightAndDarkMode: boolean;
@@ -27,6 +28,7 @@ export const SITE: SiteConfig = {
   author: "gastrodia",
   profile: "https://jiajiwei.top/",
   desc: "Jia Jiwei's notes on building web products, AI-assisted development, and the engineering decisions behind them.",
+  socialDescription: "记录我做 Web 产品、使用 AI 开发，以及一路踩过的坑。",
   title: "Code_You",
   ogImage: "cover.png",
   lightAndDarkMode: true,

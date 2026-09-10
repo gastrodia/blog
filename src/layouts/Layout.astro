@@ -12,7 +12,10 @@ export interface Props {
   author?: string;
   profile?: string;
   description?: string;
+  socialTitle?: string;
+  socialDescription?: string;
   ogImage?: string;
+  wechatImage?: string;
   canonicalURL?: string;
   pubDatetime?: Date;
   modDatetime?: Date | null;
@@ -24,7 +27,10 @@ const {
   author = SITE.author,
   profile = SITE.profile,
   description = SITE.desc,
+  socialTitle = title,
+  socialDescription,
   ogImage = SITE.ogImage ? `/${SITE.ogImage}` : "/og.png",
+  wechatImage = "/favicon.png",
   canonicalURL = new URL(Astro.url.pathname, Astro.url),
   pubDatetime,
   modDatetime,
@@ -32,6 +38,10 @@ const {
 } = Astro.props;
 
 const socialImageURL = new URL(ogImage, Astro.url);
+const wechatImageURL = new URL(wechatImage, Astro.url);
+const resolvedSocialDescription =
+  socialDescription ??
+  (description === SITE.desc ? SITE.socialDescription : description);
 
 const structuredData = {
   "@context": "https://schema.org",
@@ -85,12 +95,13 @@ const svgSprite = Object.entries(icons).map(([key, svgContent]) => {
     <link rel="sitemap" href="/sitemap-index.xml" />
 
     <!-- Open Graph / Facebook -->
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
+    <meta property="og:title" content={socialTitle} />
+    <meta property="og:description" content={resolvedSocialDescription} />
     <meta property="og:type" content={pubDatetime ? "article" : "website"} />
     <meta property="og:site_name" content={SITE.title} />
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:image" content={socialImageURL} />
+    <meta name="wechat:image" content={wechatImageURL} />
 
     <!-- Article Published/Modified time -->
     {
@@ -113,8 +124,8 @@ const svgSprite = Object.entries(icons).map(([key, svgContent]) => {
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content={canonicalURL} />
-    <meta property="twitter:title" content={title} />
-    <meta property="twitter:description" content={description} />
+    <meta property="twitter:title" content={socialTitle} />
+    <meta property="twitter:description" content={resolvedSocialDescription} />
     <meta property="twitter:image" content={socialImageURL} />
     <script is:inline data-astro-rerun>
       // 初始化主题色防止闪屏

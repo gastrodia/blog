@@ -27,6 +27,7 @@ const {
   title,
   author,
   description,
+  socialDescription,
   ogImage: initOgImage,
   canonicalURL,
   pubDatetime,
@@ -59,8 +60,10 @@ const ogImage = ogImageUrl
 
 const layoutProps = {
   title: `${title} | ${SITE.title}`,
+  socialTitle: title,
   author,
   description,
+  socialDescription,
   pubDatetime,
   modDatetime,
   canonicalURL,
