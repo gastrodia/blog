@@ -167,10 +167,10 @@ export const EDUCATION = [
 
 export const PROJECTS = [
   {
-    title: "Ledger",
+    title: "知余 (Ledger)",
     href: "https://ledger.jiajiwei.top/",
-    tags: "Next.js, React, TypeScript, PostgreSQL",
-    desc: "A personal and family ledger for keeping spending, gifts, and loans in view. It connects member-based reports and repayment tracking with optional AI summaries of recorded finances.",
+    tags: "Next.js, React, TypeScript, PostgreSQL, AI SDK",
+    desc: "A family finance agent. It turns text, voice, and bill screenshots into editable drafts, answers questions about household finances, and manages gifts, loans, and repayments. Changes to the ledger require review and confirmation.",
     github: "https://github.com/gastrodia/ledger",
     wip: false,
   },
