@@ -1,0 +1,94 @@
+---
+import {
+  PUBLIC_UMAMI_WEBSITE_ID,
+  PUBLIC_UMAMI_SCRIPT_URL,
+} from "astro:env/client";
+import { SITE } from "@/config";
+
+const websiteId = PUBLIC_UMAMI_WEBSITE_ID?.trim();
+const scriptUrl =
+  PUBLIC_UMAMI_SCRIPT_URL?.trim() || "https://cloud.umami.is/script.js";
+const domain = new URL(SITE.website).hostname;
+---
+
+{
+  import.meta.env.PROD && websiteId && (
+    <script
+      id="umami-tracker"
+      is:inline
+      defer
+      src={scriptUrl}
+      data-website-id={websiteId}
+      data-domains={domain}
+      data-auto-pageview="false"
+      data-exclude-hash="true"
+    />
+  )
+}
+
+<script>
+  type Payload = Record<string, unknown>;
+  let previousPage: string | undefined;
+  let referrer = document.referrer;
+  let pageviewPending = false;
+
+  function track(name?: string, data?: Record<string, string>) {
+    const umami = (
+      window as Window & {
+        umami?: {
+          track: (callback: (payload: Payload) => Payload) => Promise<unknown>;
+        };
+      }
+    ).umami;
+    if (!umami) return false;
+
+    const url = new URL(window.location.href);
+    url.hash = "";
+    // Override Umami's cached URL/referrer, which are stale on popstate.
+    void umami
+      .track(payload => ({
+        ...payload,
+        url: url.href,
+        title: document.title,
+        referrer,
+        ...(name && { name, data }),
+      }))
+      .catch(() => {});
+    return true;
+  }
+
+  function flushPageview() {
+    if (pageviewPending && track()) pageviewPending = false;
+  }
+
+  // Astro emits this for initial load, client navigation, back, and forward.
+  document.addEventListener("astro:page-load", () => {
+    referrer = previousPage ?? document.referrer;
+    previousPage = window.location.href;
+    pageviewPending = true;
+    flushPageview();
+  });
+  // The first page may be ready before the deferred cloud script finishes.
+  document
+    .getElementById("umami-tracker")
+    ?.addEventListener("load", flushPageview);
+
+  // Keep native downloads, new tabs, and Astro transitions intact: Umami's
+  // built-in link events prevent default navigation, so use our own attributes.
+  document.addEventListener("click", event => {
+    if (!(event.target instanceof Element)) return;
+    const element = event.target.closest<HTMLElement>("[data-analytics-event]");
+    if (!element) return;
+    const name = element.dataset.analyticsEvent;
+    if (!name) return;
+
+    const data: Record<string, string> = {};
+    if (element.dataset.analyticsProject) {
+      data.project = element.dataset.analyticsProject;
+    }
+    if (element.dataset.analyticsChannel) {
+      data.channel = element.dataset.analyticsChannel;
+    }
+    track(name, data);
+  });
+</script>

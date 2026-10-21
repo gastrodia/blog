@@ -6,6 +6,7 @@ import "@/styles/global.css";
 import svg2symbol from "@/utils/svg2symbol";
 import ChatWidget from "@/components/ChatWidget/index.astro";
 import WechatShare from "@/components/WechatShare.astro";
+import Analytics from "@/components/Analytics.astro";
 
 export interface Props {
   title?: string;
@@ -198,6 +199,7 @@ const svgSprite = Object.entries(icons).map(([key, svgContent]) => {
 
     <ClientRouter />
     <WechatShare />
+    <Analytics />
 
     <!-- <script is:inline src="/toggle-theme.js"></script> -->
   </head>

@@ -9,6 +9,8 @@ export interface Props {
   target?: string;
   download?: string;
   dataAstroReload?: boolean;
+  "data-analytics-event"?: string;
+  "data-analytics-channel"?: string;
 }
 
 const {
@@ -42,6 +44,8 @@ const {
       {title}
       {target}
       download={download ? download : void 0}
+      data-analytics-event={Astro.props["data-analytics-event"]}
+      data-analytics-channel={Astro.props["data-analytics-channel"]}
     >
       <slot />
     </a>

@@ -57,6 +57,16 @@ export default defineConfig({
   },
   env: {
     schema: {
+      PUBLIC_UMAMI_WEBSITE_ID: envField.string({
+        access: "public",
+        context: "client",
+        optional: true,
+      }),
+      PUBLIC_UMAMI_SCRIPT_URL: envField.string({
+        access: "public",
+        context: "client",
+        optional: true,
+      }),
       PUBLIC_GOOGLE_SITE_VERIFICATION: envField.string({
         access: "public",
         context: "client",

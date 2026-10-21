@@ -3,7 +3,11 @@ import LinkButton from "./LinkButton.astro";
 import Icon from "@/components/Icon.astro";
 ---
 
-<LinkButton href="/resume" class="flex gap-1 rounded-md border px-3 py-2">
+<LinkButton
+  href="/resume"
+  class="flex gap-1 rounded-md border px-3 py-2"
+  data-analytics-event="view-resume"
+>
   <Icon name="PDF" class="size-6" />
   <span>View resume</span>
 </LinkButton>

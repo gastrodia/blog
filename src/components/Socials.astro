@@ -17,6 +17,8 @@ const { centered = false } = Astro.props;
         href={social.href}
         class="p-2 hover:rotate-6 sm:p-1"
         title={social.linkTitle}
+        data-analytics-event="social-click"
+        data-analytics-channel={social.name}
       >
         <Icon
           name={social.icon}
